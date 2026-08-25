@@ -1,6 +1,12 @@
 import datetime
 
-from newsletter.curator import curar, deduplicar, pontuar, remover_vencidas
+from newsletter.curator import (
+    MAX_VERIFICACOES_POR_BLOCO,
+    curar,
+    deduplicar,
+    pontuar,
+    remover_vencidas,
+)
 from newsletter.history import chave
 from newsletter.models import Oportunidade
 
@@ -143,3 +149,50 @@ def test_curar_verifica_link_apenas_do_que_sobrou():
     ]
     curar(itens, set(), HOJE, registrando)
     assert visitados == ["https://exemplo.org/viva"]
+
+
+def test_curar_nao_verifica_link_de_item_que_o_corte_descartaria():
+    """Checar 140 links para publicar 10 e desperdicio e maltrata a fonte:
+    a verificacao desce a lista ordenada e para quando ja tem o bastante."""
+    visitados = []
+
+    def registrando(url):
+        visitados.append(url)
+        return True
+
+    itens = [_op(f"https://exemplo.org/{i}", titulo=f"Trainee {i}") for i in range(60)]
+    blocos = curar(itens, set(), HOJE, registrando)
+    assert len(blocos["Trainees e estágios"]) == 5
+    assert len(visitados) == 5, f"verificou {len(visitados)} links para publicar 5"
+
+
+def test_curar_desce_a_lista_quando_o_link_do_topo_esta_morto():
+    """Link morto no topo nao pode deixar a edicao curta: entra o proximo."""
+    itens = [_op(f"https://exemplo.org/{i}", titulo=f"Trainee {i}") for i in range(12)]
+    mortos = {"https://exemplo.org/0", "https://exemplo.org/1"}
+    blocos = curar(itens, set(), HOJE, lambda url: url not in mortos)
+    urls = [op.url for op in blocos["Trainees e estágios"]]
+    assert len(urls) == 5
+    assert not (mortos & set(urls))
+
+
+def test_curar_desiste_depois_de_um_teto_de_verificacoes():
+    """Bloco em que tudo esta morto nao pode virar 50 requisicoes."""
+    visitados = []
+
+    def tudo_morto(url):
+        visitados.append(url)
+        return False
+
+    itens = [_op(f"https://exemplo.org/{i}", titulo=f"Trainee {i}") for i in range(80)]
+    blocos = curar(itens, set(), HOJE, tudo_morto)
+    assert blocos["Trainees e estágios"] == []
+    assert len(visitados) <= MAX_VERIFICACOES_POR_BLOCO
+
+
+def test_curar_mantem_afirmativa_no_topo_apos_a_verificacao():
+    """A ordenacao por relevancia tem que sobreviver a verificacao de link."""
+    itens = [_op(f"https://exemplo.org/{i}", titulo=f"Trainee {i}") for i in range(8)]
+    itens.append(_op("https://exemplo.org/afirm", titulo="Trainee Y", afirmativa=True))
+    blocos = curar(itens, set(), HOJE, _aceita_tudo)
+    assert blocos["Trainees e estágios"][0].afirmativa is True

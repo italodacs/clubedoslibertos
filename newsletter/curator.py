@@ -5,6 +5,7 @@ para que os testes rodem offline.
 """
 
 import datetime
+import logging
 import re
 import unicodedata
 from collections.abc import Callable, Iterable
@@ -13,9 +14,15 @@ from newsletter.config import AREAS_MEMBROS, ESTADOS_MEMBROS, LIMITE_POR_BLOCO
 from newsletter.history import chave
 from newsletter.models import Oportunidade, bloco_de
 
+log = logging.getLogger(__name__)
+
 PONTOS_AFIRMATIVA = 100
 PONTOS_AREA = 10
 PONTOS_ESTADO = 5
+
+# Teto de checagens de link por bloco. Sem ele, um bloco em que tudo está morto
+# viraria uma requisição por candidato — 50 chamadas para publicar zero item.
+MAX_VERIFICACOES_POR_BLOCO = LIMITE_POR_BLOCO * 3
 
 
 def _normalizar(texto: str) -> str:
@@ -80,22 +87,50 @@ def curar(
 ) -> dict[str, list[Oportunidade]]:
     """Pipeline de curadoria completo, agrupando por bloco da edição.
 
-    A ordem importa: dedupe e prazo são baratos e vêm antes da verificação de
-    link, que gasta rede. Não se checa link de item que já foi descartado.
+    A ordem importa, e é toda ela sobre não gastar rede à toa: os filtros
+    baratos (dedupe, prazo) vêm primeiro, depois o ranking, e só então a
+    verificação de link — que desce a lista ordenada e para assim que o bloco
+    está cheio. Verificar antes de cortar significaria checar 140 links para
+    publicar 10, e bater nas fontes 140 vezes por semana sem necessidade.
     """
     itens = deduplicar(oportunidades, historico)
     itens = remover_vencidas(itens, hoje)
-    itens = [op for op in itens if verificar_link(op.url)]
 
-    blocos: dict[str, list[Oportunidade]] = {
+    candidatos: dict[str, list[Oportunidade]] = {
         "Trainees e estágios": [],
         "Editais e formações": [],
     }
     for op in itens:
-        blocos[bloco_de(op.categoria)].append(op)
+        candidatos[bloco_de(op.categoria)].append(op)
 
-    for nome, lista in blocos.items():
+    blocos: dict[str, list[Oportunidade]] = {}
+    for nome, lista in candidatos.items():
         lista.sort(key=pontuar, reverse=True)
-        blocos[nome] = lista[:LIMITE_POR_BLOCO]
+        blocos[nome] = _com_link_vivo(lista, verificar_link)
 
     return blocos
+
+
+def _com_link_vivo(
+    ordenados: list[Oportunidade], verificar_link: Callable[[str], bool]
+) -> list[Oportunidade]:
+    """Desce a lista já ordenada até completar o bloco.
+
+    Link morto no topo não deixa a edição curta: entra o próximo colocado. Mas
+    a busca desiste depois de `MAX_VERIFICACOES_POR_BLOCO` tentativas, para que
+    um bloco inteiro de links quebrados não vire uma enxurrada de requisições.
+    """
+    escolhidos: list[Oportunidade] = []
+    for tentativa, op in enumerate(ordenados, start=1):
+        if tentativa > MAX_VERIFICACOES_POR_BLOCO:
+            log.warning(
+                "desisti apos %d verificacoes de link; %d item(ns) no bloco",
+                MAX_VERIFICACOES_POR_BLOCO,
+                len(escolhidos),
+            )
+            break
+        if verificar_link(op.url):
+            escolhidos.append(op)
+            if len(escolhidos) == LIMITE_POR_BLOCO:
+                break
+    return escolhidos

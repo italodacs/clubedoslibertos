@@ -20,14 +20,6 @@
   seletor: ".jeg_post_title"
   afirmativa: false
 
-- nome: Vagas.com Trainee
-  url: https://www.vagas.com.br/vagas-de-trainee
-  tipo: html
-  categoria: trainee
-  seletor: ".informacoes-header"
-  titulo: bloco
-  afirmativa: false
-
 # --- Estagio ---
 
 - nome: Cia de Estagios
@@ -46,14 +38,6 @@
   # Site em Wix: as classes sao hashes gerados e mudam a cada rebuild, entao a
   # unica ancora estavel e o proprio padrao de href.
   seletor: 'a[href*="/post/"]'
-  afirmativa: false
-
-- nome: Vagas.com Estagio
-  url: https://www.vagas.com.br/vagas-de-estagio
-  tipo: html
-  categoria: estagio
-  seletor: ".informacoes-header"
-  titulo: bloco
   afirmativa: false
 
 # --- Educacao gratuita ---

@@ -20,15 +20,13 @@ informativo e URL absoluta que aponte para a página real da oportunidade.
 
 ## Aprovadas
 
-Oito fontes, 216 itens coletados na verificação, nenhuma falha.
+Seis fontes, nenhuma falha na verificação.
 
 | Fonte | Categoria | Seletor | Itens | Observação |
 |---|---|---|---|---|
 | Seja Trainee | `trainee` | `.jeg_post_title` | 35 (33 únicos) | Melhor fonte de trainee: cada item é um texto sobre o processo seletivo, com nome da empresa e edição no título |
-| Vagas.com Trainee | `trainee` | `.informacoes-header` | 40 (39 únicos) | `titulo: bloco`. Mistura anúncio comum na listagem — ver "Qualidade" abaixo |
 | Cia de Estagios | `estagio` | `.vagas__card:not(.--expired)` | 11 | Saída mais limpa de todas. O seletor exclui as vagas que a própria página marca como encerradas |
 | Estagio Trainee | `estagio` | `a[href*="/post/"]` | 16 | Site em Wix: as classes são hashes gerados que mudam a cada rebuild, então o href é a única âncora estável |
-| Vagas.com Estagio | `estagio` | `.informacoes-header` | 40 (39 únicos) | `titulo: bloco` — o link sozinho diz apenas "Estagiário" |
 | Sebrae Cursos Online | `educacao` | `.product-card__title` | 50 (43 únicos) | O catálogo marca "Gratuito" em cada curso e não há preço na página — confirmado |
 | Escola Virtual Gov | `educacao` | `.card-title` | 12 | Cursos gratuitos do governo federal; único domínio com TLS válido daqui |
 | Estudar Fora | `edital` | `.dce-post-title` | 12 (9 únicos) | Bolsas e intercâmbio. Mistura artigo com oportunidade — ver "Qualidade" abaixo |
@@ -51,6 +49,7 @@ Oito fontes, 216 itens coletados na verificação, nenhuma falha.
 | Fundação Lemann | HTTP 502 na avaliação |
 | CNPq chamadas públicas | HTTP 404; o portal gov.br responde 401 a robô em outras rotas |
 | Nube (`/vagas`) | HTTP 404 |
+| Vagas.com (trainee e estágio) | **Removida em 25/08/2026 por decisão da Presidência.** Parseava bem (40 itens cada), mas misturava anúncio comum na listagem de trainee: entraram três variações de "Agente Stone — Executivo de Contas Externo", que a deduplicação não colapsou porque a cidade muda o título. As fontes especializadas cobrem o mesmo terreno com qualidade melhor |
 | empregosafirmativos.com.br | Domínio não resolve |
 | indiqueumapreta.com.br | Domínio não resolve |
 | afrolab.com.br | Domínio não resolve |
@@ -67,10 +66,6 @@ chega hoje pelo Seja Trainee, que cobre esses processos em texto próprio.
 A verificação com dados reais mostrou que **parsear não é o mesmo que servir ao
 propósito**. Duas fontes aprovadas trazem ruído junto:
 
-- **Vagas.com** mistura anúncio comum na listagem de trainee e estágio. Na
-  edição de teste entraram três variações de "Agente Stone — Executivo de
-  Contas Externo", que não é programa de trainee, e a deduplicação não as
-  colapsou porque a cidade muda o título.
 - **Seja Trainee** publica também post promocional ("Nova Era Trainees:
   prepare-se...", "Conheça a Cursoria..."), que parece oportunidade mas é
   publicidade de curso preparatório.
@@ -79,9 +74,8 @@ propósito**. Duas fontes aprovadas trazem ruído junto:
   universidades do mundo em 2025", "Vídeo: o que é o SAT?").
 
 É exatamente para isso que existe a etapa de revisão humana antes do envio. Se
-o ruído incomodar toda semana, os caminhos são: cortar o Vagas.com (as fontes
-especializadas cobrem melhor o mesmo terreno), ou criar uma lista de palavras
-que reprovam um item no `curator`.
+o ruído incomodar toda semana, o caminho é uma lista de palavras que reprovam
+um item no `curator`.
 
 ## Lacunas conhecidas
 

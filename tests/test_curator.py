@@ -1,7 +1,7 @@
 import datetime
 
 from newsletter.curator import (
-    MAX_VERIFICACOES_POR_BLOCO,
+    MAX_VERIFICACOES_POR_CATEGORIA,
     curar,
     deduplicar,
     pontuar,
@@ -120,12 +120,34 @@ def test_curar_descarta_link_morto():
     assert blocos["Trainees e estágios"] == []
 
 
-def test_curar_corta_em_cinco_itens_por_bloco():
-    itens = [
-        _op(f"https://exemplo.org/{i}", titulo=f"Trainee {i}") for i in range(9)
+def test_curar_corta_no_limite_de_cada_categoria():
+    itens = [_op(f"https://exemplo.org/t{i}", titulo=f"Trainee {i}") for i in range(30)]
+    itens += [
+        _op(f"https://exemplo.org/e{i}", titulo=f"Estagio {i}", categoria="estagio")
+        for i in range(30)
+    ]
+    itens += [
+        _op(f"https://exemplo.org/c{i}", titulo=f"Curso {i}", categoria="educacao")
+        for i in range(30)
     ]
     blocos = curar(itens, set(), HOJE, _aceita_tudo)
-    assert len(blocos["Trainees e estágios"]) == 5
+    # 10 trainee + 10 estagio dividem o mesmo bloco; educacao tem teto de 7.
+    assert len(blocos["Trainees e estágios"]) == 20
+    assert len(blocos["Editais e formações"]) == 7
+
+
+def test_categoria_nao_rouba_a_cota_da_outra_no_mesmo_bloco():
+    """Trainee e estagio moram no mesmo bloco: 30 trainees nao podem ocupar as
+    vagas de estagio."""
+    itens = [_op(f"https://exemplo.org/t{i}", titulo=f"Trainee {i}") for i in range(30)]
+    itens += [
+        _op(f"https://exemplo.org/e{i}", titulo=f"Estagio {i}", categoria="estagio")
+        for i in range(3)
+    ]
+    blocos = curar(itens, set(), HOJE, _aceita_tudo)
+    escolhidos = blocos["Trainees e estágios"]
+    assert sum(1 for op in escolhidos if op.categoria == "trainee") == 10
+    assert sum(1 for op in escolhidos if op.categoria == "estagio") == 3
 
 
 def test_curar_ordena_afirmativa_primeiro():
@@ -162,17 +184,17 @@ def test_curar_nao_verifica_link_de_item_que_o_corte_descartaria():
 
     itens = [_op(f"https://exemplo.org/{i}", titulo=f"Trainee {i}") for i in range(60)]
     blocos = curar(itens, set(), HOJE, registrando)
-    assert len(blocos["Trainees e estágios"]) == 5
-    assert len(visitados) == 5, f"verificou {len(visitados)} links para publicar 5"
+    assert len(blocos["Trainees e estágios"]) == 10
+    assert len(visitados) == 10, f"verificou {len(visitados)} links para publicar 10"
 
 
 def test_curar_desce_a_lista_quando_o_link_do_topo_esta_morto():
     """Link morto no topo nao pode deixar a edicao curta: entra o proximo."""
-    itens = [_op(f"https://exemplo.org/{i}", titulo=f"Trainee {i}") for i in range(12)]
+    itens = [_op(f"https://exemplo.org/{i}", titulo=f"Trainee {i}") for i in range(20)]
     mortos = {"https://exemplo.org/0", "https://exemplo.org/1"}
     blocos = curar(itens, set(), HOJE, lambda url: url not in mortos)
     urls = [op.url for op in blocos["Trainees e estágios"]]
-    assert len(urls) == 5
+    assert len(urls) == 10
     assert not (mortos & set(urls))
 
 
@@ -187,7 +209,7 @@ def test_curar_desiste_depois_de_um_teto_de_verificacoes():
     itens = [_op(f"https://exemplo.org/{i}", titulo=f"Trainee {i}") for i in range(80)]
     blocos = curar(itens, set(), HOJE, tudo_morto)
     assert blocos["Trainees e estágios"] == []
-    assert len(visitados) <= MAX_VERIFICACOES_POR_BLOCO
+    assert len(visitados) <= MAX_VERIFICACOES_POR_CATEGORIA
 
 
 def test_curar_mantem_afirmativa_no_topo_apos_a_verificacao():

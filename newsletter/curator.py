@@ -10,7 +10,7 @@ import re
 import unicodedata
 from collections.abc import Callable, Iterable
 
-from newsletter.config import AREAS_MEMBROS, ESTADOS_MEMBROS, LIMITE_POR_BLOCO
+from newsletter.config import AREAS_MEMBROS, ESTADOS_MEMBROS, LIMITES_POR_CATEGORIA
 from newsletter.history import chave
 from newsletter.models import Oportunidade, bloco_de
 
@@ -20,9 +20,10 @@ PONTOS_AFIRMATIVA = 100
 PONTOS_AREA = 10
 PONTOS_ESTADO = 5
 
-# Teto de checagens de link por bloco. Sem ele, um bloco em que tudo está morto
-# viraria uma requisição por candidato — 50 chamadas para publicar zero item.
-MAX_VERIFICACOES_POR_BLOCO = LIMITE_POR_BLOCO * 3
+# Teto de checagens de link por categoria. Sem ele, uma categoria em que tudo
+# está morto viraria uma requisição por candidato — dezenas de chamadas para
+# publicar zero item.
+MAX_VERIFICACOES_POR_CATEGORIA = max(LIMITES_POR_CATEGORIA.values()) * 3
 
 
 def _normalizar(texto: str) -> str:
@@ -87,50 +88,65 @@ def curar(
 ) -> dict[str, list[Oportunidade]]:
     """Pipeline de curadoria completo, agrupando por bloco da edição.
 
+    A cota é por categoria, e não por bloco: "Trainees e estágios" reúne duas
+    categorias, e sem cota separada um dia farto de trainees ocuparia as vagas
+    de estágio.
+
     A ordem importa, e é toda ela sobre não gastar rede à toa: os filtros
     baratos (dedupe, prazo) vêm primeiro, depois o ranking, e só então a
-    verificação de link — que desce a lista ordenada e para assim que o bloco
-    está cheio. Verificar antes de cortar significaria checar 140 links para
+    verificação de link — que desce a lista ordenada e para assim que a cota
+    está cheia. Verificar antes de cortar significaria checar 140 links para
     publicar 10, e bater nas fontes 140 vezes por semana sem necessidade.
     """
     itens = deduplicar(oportunidades, historico)
     itens = remover_vencidas(itens, hoje)
 
-    candidatos: dict[str, list[Oportunidade]] = {
+    candidatos: dict[str, list[Oportunidade]] = {}
+    for op in itens:
+        candidatos.setdefault(op.categoria, []).append(op)
+
+    blocos: dict[str, list[Oportunidade]] = {
         "Trainees e estágios": [],
         "Editais e formações": [],
     }
-    for op in itens:
-        candidatos[bloco_de(op.categoria)].append(op)
-
-    blocos: dict[str, list[Oportunidade]] = {}
-    for nome, lista in candidatos.items():
+    for categoria, lista in candidatos.items():
         lista.sort(key=pontuar, reverse=True)
-        blocos[nome] = _com_link_vivo(lista, verificar_link)
+        escolhidos = _com_link_vivo(
+            lista, verificar_link, LIMITES_POR_CATEGORIA[categoria]
+        )
+        blocos[bloco_de(categoria)].extend(escolhidos)
+
+    # Categorias diferentes chegam ao mesmo bloco em ordens separadas; a
+    # reordenação final garante que a afirmativa continue no topo do bloco.
+    for nome in blocos:
+        blocos[nome].sort(key=pontuar, reverse=True)
 
     return blocos
 
 
 def _com_link_vivo(
-    ordenados: list[Oportunidade], verificar_link: Callable[[str], bool]
+    ordenados: list[Oportunidade],
+    verificar_link: Callable[[str], bool],
+    limite: int,
 ) -> list[Oportunidade]:
-    """Desce a lista já ordenada até completar o bloco.
+    """Desce a lista já ordenada até completar a cota da categoria.
 
     Link morto no topo não deixa a edição curta: entra o próximo colocado. Mas
-    a busca desiste depois de `MAX_VERIFICACOES_POR_BLOCO` tentativas, para que
-    um bloco inteiro de links quebrados não vire uma enxurrada de requisições.
+    a busca desiste depois de `MAX_VERIFICACOES_POR_CATEGORIA` tentativas, para
+    que uma categoria inteira de links quebrados não vire uma enxurrada de
+    requisições.
     """
     escolhidos: list[Oportunidade] = []
     for tentativa, op in enumerate(ordenados, start=1):
-        if tentativa > MAX_VERIFICACOES_POR_BLOCO:
+        if tentativa > MAX_VERIFICACOES_POR_CATEGORIA:
             log.warning(
-                "desisti apos %d verificacoes de link; %d item(ns) no bloco",
-                MAX_VERIFICACOES_POR_BLOCO,
+                "desisti apos %d verificacoes de link; %d item(ns) na categoria",
+                MAX_VERIFICACOES_POR_CATEGORIA,
                 len(escolhidos),
             )
             break
         if verificar_link(op.url):
             escolhidos.append(op)
-            if len(escolhidos) == LIMITE_POR_BLOCO:
+            if len(escolhidos) == limite:
                 break
     return escolhidos

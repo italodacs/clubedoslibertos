@@ -102,6 +102,45 @@ def test_titulo_pode_vir_do_bloco_em_vez_do_link():
     assert itens[1].titulo == "Trainee Tributário Empresa Beta"
 
 
+def test_seletor_pode_apontar_para_a_propria_ancora():
+    """Site cujas classes sao hashes gerados (Wix) so pode ser selecionado pelo
+    href; ai o seletor casa com o <a>, nao com um bloco em volta dele."""
+    fonte = {**FONTE_HTML, "seletor": 'a[href*="/curso/"]'}
+    itens, _ = coletar([fonte], _buscador({fonte["url"]: _pagina()}))
+    assert [i.titulo for i in itens] == [
+        "Curso Gratuito de Dados",
+        "Curso Gratuito de Gestão",
+    ]
+
+
+def test_titulo_pode_vir_de_um_seletor_dentro_do_bloco():
+    """Card cuja ancora e vazia e o titulo mora num h2 a parte. Pegar o bloco
+    inteiro traria 'Compartilhar WhatsApp LinkedIn' junto."""
+    fonte = {**FONTE_HTML, "seletor": ".vaga-card", "titulo": ".vaga-titulo"}
+    itens, _ = coletar([fonte], _buscador({fonte["url"]: _pagina()}))
+    assert itens[0].titulo == "Programa de Estágio Ultragaz 2027"
+    assert "Compartilhar" not in itens[0].titulo
+
+
+def test_seletor_de_titulo_permite_excluir_bloco_expirado():
+    """A propria pagina marca a vaga encerrada com uma classe; o seletor filtra."""
+    fonte = {
+        **FONTE_HTML,
+        "seletor": ".vaga-card:not(.--expirada)",
+        "titulo": ".vaga-titulo",
+    }
+    itens, _ = coletar([fonte], _buscador({fonte["url"]: _pagina()}))
+    assert len(itens) == 1
+    assert "fechou" not in itens[0].titulo
+
+
+def test_item_com_titulo_vazio_e_descartado():
+    """Ancora sem texto daria uma linha em branco no email."""
+    fonte = {**FONTE_HTML, "seletor": ".vaga-card"}
+    itens, _ = coletar([fonte], _buscador({fonte["url"]: _pagina()}))
+    assert itens == []
+
+
 def test_descarta_href_que_nao_e_http():
     """javascript:, mailto: e afins nao sao oportunidade."""
     fonte = {**FONTE_HTML, "seletor": ".card-ruim"}

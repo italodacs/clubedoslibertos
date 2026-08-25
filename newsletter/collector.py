@@ -73,21 +73,48 @@ def _texto(elemento) -> str:
     return re.sub(r"\s+", " ", elemento.get_text(" ", strip=True)).strip()
 
 
+def _titulo_de(bloco, ancora, modo: str | None) -> str:
+    """De onde sai o título do item.
+
+    Sem `modo`, o texto do próprio link — serve para a maioria das fontes.
+    `"bloco"` usa o texto do bloco inteiro, para portal cujo link diz apenas
+    "Estagiário" e a empresa está em volta. Qualquer outro valor é um seletor
+    CSS dentro do bloco, para card cuja âncora é vazia e o título mora num
+    elemento à parte.
+    """
+    if modo == "bloco":
+        return _texto(bloco)
+    if modo:
+        alvo = bloco.select_one(modo)
+        return _texto(alvo) if alvo else ""
+    return _texto(ancora)
+
+
 def _do_html(conteudo: str, fonte: dict) -> list[Oportunidade]:
     sopa = BeautifulSoup(conteudo, "html.parser")
-    do_bloco = fonte.get("titulo") == "bloco"
+    modo_titulo = fonte.get("titulo")
     itens = []
     for bloco in sopa.select(fonte["seletor"]):
-        ancora = bloco.find("a", href=True)
+        # O seletor pode casar com um bloco em volta do link ou com o próprio
+        # link — este último é o único caminho estável em site cujas classes
+        # são hashes gerados, onde só resta selecionar pelo href.
+        if bloco.name == "a" and bloco.get("href"):
+            ancora = bloco
+        else:
+            ancora = bloco.find("a", href=True)
         if not ancora:
             continue
         url = urljoin(fonte["url"], ancora["href"])
         # javascript:, mailto: e afins não são oportunidade.
         if not url.startswith(("http://", "https://")):
             continue
+        titulo = _titulo_de(bloco, ancora, modo_titulo)
+        # Título vazio viraria uma linha em branco no email.
+        if not titulo:
+            continue
         itens.append(
             Oportunidade(
-                titulo=_texto(bloco if do_bloco else ancora),
+                titulo=titulo,
                 url=url,
                 categoria=fonte["categoria"],
                 fonte=fonte["nome"],

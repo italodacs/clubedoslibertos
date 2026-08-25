@@ -11,7 +11,7 @@ CAMPOS_OBRIGATORIOS = {"nome", "url", "tipo", "categoria", "afirmativa"}
 
 # Categorias que ainda não têm fonte fixa aprovada e são cobertas apenas pelo
 # discovery. Ver docs/fontes-avaliadas.md para o que foi testado e reprovado.
-SEM_FONTE_FIXA = {"edital"}
+SEM_FONTE_FIXA = set()
 
 
 def _fontes():
@@ -42,11 +42,11 @@ def test_fonte_html_declara_seletor():
             assert fonte.get("seletor"), f"{fonte['nome']} e html e nao tem seletor"
 
 
-def test_titulo_quando_declarado_e_bloco():
-    """O unico valor alternativo suportado e 'bloco'; qualquer outro e engano."""
+def test_titulo_declarado_e_bloco_ou_um_seletor_util():
+    """'bloco' ou um seletor CSS. String vazia seria um engano silencioso."""
     for fonte in _fontes():
         if "titulo" in fonte:
-            assert fonte["titulo"] == "bloco", fonte["nome"]
+            assert fonte["titulo"], fonte["nome"]
 
 
 def test_url_e_absoluta_e_https():

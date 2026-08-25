@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- **Máximo de 5 itens por bloco** da edição.
+- **Cota por categoria:** 10 trainee, 10 estágio, 7 educação, 7 edital (bolsas e intercâmbio). Por categoria, não por bloco.
 - **Item sem URL rastreável é descartado** antes de chegar ao curator.
 - **O publisher nunca dispara envio** — só cria campanha em rascunho.
 - **Edição vazia não vira rascunho:** zero itens após a curadoria aborta a execução.

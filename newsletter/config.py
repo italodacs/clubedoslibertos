@@ -12,7 +12,15 @@ LOGO_URL = (
     "/main/newsletter/assets/logo.png"
 )
 
-LIMITE_POR_BLOCO = 5
+# Quantos itens de cada categoria entram na edição. Definido pela Presidência
+# em 25/08/2026. O corte é por categoria, não por bloco: "Trainees e estágios"
+# comporta 10 de cada, e o bloco de formações reúne educação e bolsas.
+LIMITES_POR_CATEGORIA = {
+    "trainee": 10,
+    "estagio": 10,
+    "educacao": 7,
+    "edital": 7,
+}
 
 ROXO = "#5C1A88"
 AMARELO = "#FFC812"

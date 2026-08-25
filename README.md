@@ -67,7 +67,21 @@ segredo entra em arquivo versionado, e nenhum deve ser colado em chat.**
 |---|---|
 | `GEMINI_API_KEY` | aistudio.google.com — **em projeto sem billing ativo**, senão a cota do free tier vira zero |
 | `BREVO_API_KEY` | Brevo → SMTP & API → API keys |
-| `BREVO_LIST_ID` | Brevo → Contacts → a lista de membros; o id aparece na URL |
+| `BREVO_LIST_ID` | Brevo → Contacts → Lists; o id aparece na URL da lista (hoje: `3`, lista "Membros") |
+
+## Configuração do Brevo
+
+Duas coisas que precisam estar certas na conta, e que não são óbvias:
+
+**Autorização por IP tem que ficar desligada** (`app.brevo.com/security/authorised_ips`).
+Os runners do GitHub Actions trocam de IP a cada execução e não há faixa fixa
+para cadastrar. Com a restrição ligada, a API responde `401 unrecognised IP
+address` e o job falha toda semana — com o sintoma de "a newsletter não chegou",
+sem pista óbvia.
+
+**O remetente precisa estar verificado** em Senders. O email de cadastro da
+conta já nasce verificado; qualquer outro endereço exige clicar no link de
+confirmação antes de conseguir enviar.
 
 ## Manutenção
 

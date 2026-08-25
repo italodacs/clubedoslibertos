@@ -85,6 +85,30 @@ def test_fonte_que_falha_nao_derruba_as_outras():
     assert len(itens) == 2
 
 
+def test_titulo_de_link_com_marcacao_interna_nao_vem_grudado():
+    """Ancora com <mark>/<span> dentro: sem separador, 'Trainee' + 'Tributario'
+    virava 'TraineeTributario'."""
+    fonte = {**FONTE_HTML, "seletor": ".card-vaga"}
+    itens, _ = coletar([fonte], _buscador({fonte["url"]: _pagina()}))
+    assert itens[0].titulo == "Trainee Tributário"
+
+
+def test_titulo_pode_vir_do_bloco_em_vez_do_link():
+    """Portal cujo link diz so 'Estagiario': o bloco tem a empresa e distingue
+    um item do outro, evitando que a dedup por titulo colapse tudo em um."""
+    fonte = {**FONTE_HTML, "seletor": ".card-vaga", "titulo": "bloco"}
+    itens, _ = coletar([fonte], _buscador({fonte["url"]: _pagina()}))
+    assert itens[0].titulo == "Trainee Tributário Empresa Alfa"
+    assert itens[1].titulo == "Trainee Tributário Empresa Beta"
+
+
+def test_descarta_href_que_nao_e_http():
+    """javascript:, mailto: e afins nao sao oportunidade."""
+    fonte = {**FONTE_HTML, "seletor": ".card-ruim"}
+    itens, _ = coletar([fonte], _buscador({fonte["url"]: _pagina()}))
+    assert itens == []
+
+
 def test_item_sem_link_e_descartado():
     rss_sem_link = """<?xml version="1.0"?><rss version="2.0"><channel>
         <item><title>Sem link</title></item>

@@ -1,0 +1,40 @@
+# Fontes fixas da newsletter.
+#
+# Toda fonte aqui foi verificada com o proprio collector em 25/08/2026 — veja
+# docs/fontes-avaliadas.md para o historico completo, inclusive as reprovadas e
+# o motivo de cada reprovacao.
+#
+# `titulo: bloco` faz o titulo vir do texto do bloco inteiro em vez do link.
+# Necessario em portal cujo link diz apenas "Estagiario": o bloco carrega a
+# empresa e distingue um item do outro, senao a deduplicacao por titulo
+# colapsaria as 40 vagas em uma.
+
+- nome: Vagas.com Trainee
+  url: https://www.vagas.com.br/vagas-de-trainee
+  tipo: html
+  categoria: trainee
+  seletor: ".informacoes-header"
+  titulo: bloco
+  afirmativa: false
+
+- nome: Vagas.com Estagio
+  url: https://www.vagas.com.br/vagas-de-estagio
+  tipo: html
+  categoria: estagio
+  seletor: ".informacoes-header"
+  titulo: bloco
+  afirmativa: false
+
+- nome: Sebrae Cursos Online
+  url: https://sebrae.com.br/sites/PortalSebrae/cursosonline
+  tipo: html
+  categoria: educacao
+  seletor: ".product-card__title"
+  afirmativa: false
+
+- nome: Escola Virtual Gov
+  url: https://www.escolavirtual.gov.br/catalogo
+  tipo: html
+  categoria: educacao
+  seletor: ".card-title"
+  afirmativa: false

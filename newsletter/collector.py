@@ -4,10 +4,12 @@ import datetime
 import logging
 import re
 from collections.abc import Callable
+from pathlib import Path
 from urllib.parse import urljoin
 
 import feedparser
 import requests
+import yaml
 from bs4 import BeautifulSoup
 
 from newsletter.models import Oportunidade
@@ -62,17 +64,31 @@ def _do_rss(conteudo: str, fonte: dict) -> list[Oportunidade]:
     return itens
 
 
+def _texto(elemento) -> str:
+    """Texto legível de um elemento, com espaço entre as tags internas.
+
+    Sem o separador, uma âncora como `<mark>Trainee</mark><span>Tributário</span>`
+    sai como "TraineeTributário".
+    """
+    return re.sub(r"\s+", " ", elemento.get_text(" ", strip=True)).strip()
+
+
 def _do_html(conteudo: str, fonte: dict) -> list[Oportunidade]:
     sopa = BeautifulSoup(conteudo, "html.parser")
+    do_bloco = fonte.get("titulo") == "bloco"
     itens = []
     for bloco in sopa.select(fonte["seletor"]):
         ancora = bloco.find("a", href=True)
         if not ancora:
             continue
+        url = urljoin(fonte["url"], ancora["href"])
+        # javascript:, mailto: e afins não são oportunidade.
+        if not url.startswith(("http://", "https://")):
+            continue
         itens.append(
             Oportunidade(
-                titulo=ancora.get_text(strip=True),
-                url=urljoin(fonte["url"], ancora["href"]),
+                titulo=_texto(bloco if do_bloco else ancora),
+                url=url,
                 categoria=fonte["categoria"],
                 fonte=fonte["nome"],
                 prazo=_extrair_prazo(bloco.get_text(" ", strip=True)),
@@ -101,3 +117,9 @@ def coletar(
             falhas.append(fonte["nome"])
 
     return encontrados, falhas
+
+
+def carregar_fontes(caminho: str | Path | None = None) -> list[dict]:
+    """Lê sources.yml. Sem argumento, usa o arquivo ao lado deste módulo."""
+    arquivo = Path(caminho) if caminho else Path(__file__).parent / "sources.yml"
+    return yaml.safe_load(arquivo.read_text(encoding="utf-8"))

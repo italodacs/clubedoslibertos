@@ -63,10 +63,11 @@ todos, e isso é intencional:
 | Cadastre-se na Base de Talentos | Fixo no template |
 | Espaço do Clube | **Manual** — recado, evento ou conquista de membro |
 
-Os blocos manuais aparecem no rascunho como seções vazias com um marcador
-visível, para que quem revisa saiba que pode preenchê-los ou removê-los. Uma
-seção manual vazia nunca é enviada: se não for preenchida, o marcador instrui a
-remoção e o template a esconde quando o conteúdo está em branco.
+Os blocos manuais aparecem no rascunho com um marcador visível e instrução curta
+("preencha ou apague este bloco"), em cor de destaque para não passar batido. Não
+há esconderijo automático: o Brevo envia exatamente o que está no editor, então
+quem revisa preenche ou apaga o bloco antes de disparar. O marcador é chamativo
+justamente para que passar batido seja difícil.
 
 ## 4. Arquitetura
 
@@ -161,8 +162,14 @@ alternativo em toda imagem.
 ### 4.7 `publisher` — rascunho no Brevo
 
 Cria a edição como **campanha em rascunho** apontada para a lista de membros, com
-assunto gerado a partir da semana e do destaque. Nunca dispara envio. Ao final,
-notifica que o rascunho está pronto.
+assunto gerado a partir da semana e do destaque. Nunca dispara envio.
+
+**Notificação.** Ao terminar, envia um email curto para
+`clubedoslibertos@gmail.com` pela API transacional do Brevo, com o resumo da
+execução (quantos itens por bloco, quais fontes falharam) e o link direto da
+campanha no painel. O mesmo caminho é usado nas falhas descritas na seção 6 —
+uma única forma de aviso, tanto para sucesso quanto para erro, para que silêncio
+signifique sempre "o job não rodou".
 
 ### 4.8 `history.json` — estado no próprio repositório
 

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Feed de Exemplo</title>
+    <item>
+      <title>Programa de Trainee 2027</title>
+      <link>https://exemplo.org/trainee-2027</link>
+      <description>Inscrições até 30/09/2026.</description>
+    </item>
+    <item>
+      <title>Estágio em Tecnologia</title>
+      <link>https://exemplo.org/estagio-tech</link>
+      <description>Vagas abertas.</description>
+    </item>
+  </channel>
+</rss>

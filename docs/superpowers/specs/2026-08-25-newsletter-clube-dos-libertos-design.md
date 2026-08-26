@@ -133,7 +133,10 @@ Funções puras, sem rede, sobre a união de `collector` + `discovery`:
    identificável é mantido mas marcado como "prazo não informado"
 4. **Ranking de relevância** — afirmativas primeiro; depois aderência às áreas e
    estados dos membros; depois abrangência nacional ou remota
-5. **Corte** — no máximo 5 itens por bloco, para a edição não virar um paredão
+5. **Corte** — cota por categoria, definida pela Presidência em 25/08/2026:
+   10 trainees, 10 estágios, 7 de educação e 7 de bolsas/intercâmbio. A cota é
+   por categoria e não por bloco: "Trainees e estágios" reúne duas categorias, e
+   sem cota separada um dia farto de trainees ocuparia as vagas de estágio
 
 ### 4.5 `writer` — redação
 

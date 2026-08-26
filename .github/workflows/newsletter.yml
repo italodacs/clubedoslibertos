@@ -12,6 +12,11 @@ permissions:
 jobs:
   edicao:
     runs-on: ubuntu-latest
+    # Os segredos vivem num environment, nao no nivel do repositorio. Sem esta
+    # linha, `secrets.*` chega vazio e o job quebra na primeira variavel lida.
+    # O nome do environment e infeliz — e o nome de um dos segredos, nao um
+    # ambiente — mas trocar exigiria recadastrar os tres valores.
+    environment: BREVO_API_KEY
     steps:
       - uses: actions/checkout@v4
 

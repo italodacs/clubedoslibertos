@@ -1,12 +1,12 @@
 # Prompt da pesquisa semanal (Claude app)
 
 Este é o prompt da rotina semanal no app do Claude. Ela pesquisa as
-oportunidades e devolve o conteúdo pronto para colar em
-`newsletter/edicao.md`, que é o que o pipeline lê.
+oportunidades e devolve o conteúdo da edição em markdown.
 
 **Como usar:** no app do Claude, crie uma tarefa recorrente (sugestão: domingo à
-noite, para o envio de segunda) e cole o prompt abaixo. Depois pegue a saída e
-cole no arquivo `newsletter/edicao.md`, editando direto pelo github.com.
+noite, para o envio de segunda) com o prompt abaixo. Depois cole a saída no
+Google Doc da edição, revise, e rode o Apps Script — que lê o Doc, pede ao
+Gemini para escrever o email e envia para a lista da planilha.
 
 **Por que markdown solto e não JSON:** o Apps Script não precisa entender o
 formato. Ele manda o texto do Doc para o Gemini, que já vai ser chamado para

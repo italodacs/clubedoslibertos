@@ -42,11 +42,12 @@ ordem. Qualquer coluna cujo título contenha:
 
 - `email` ou `e-mail` → endereço
 - `nome` → usado na saudação ("Olá, Ana!")
-- `ativo` ou `receb` → controle de quem recebe
+- `status` → controle de quem recebe
 
-Na coluna de controle, célula **vazia conta como ativo**: quem sai é marcado
-explicitamente com `não`. Assim ninguém deixa de receber por esquecimento de
-preencher.
+Na coluna `status`, célula **vazia conta como ativa**: ninguém deixa de receber
+por esquecimento de preencher. O que tira da lista é valor explícito de saída —
+`inativa`, `inativo`, `não`, `descadastrado`. A comparação é por prefixo
+`inativ`, então gênero e acento não importam.
 
 Sem cabeçalho reconhecível, o script cai para coluna A = nome e B = email.
 Email repetido recebe uma vez só.
@@ -71,10 +72,12 @@ prazo entram, mas com aviso na pré-visualização.
 - **Cota de envio do Gmail:** ~100 destinatários por dia em conta comum, ~1.500
   no Workspace. O script confere antes de começar e aborta se não couber — pior
   que não enviar é enviar para metade da lista.
-- **Descadastro é manual.** Diferente de um serviço de newsletter, aqui quem
-  pede para sair precisa ser marcado na planilha por alguém. Com a comunidade
-  pequena funciona; passando de algumas dezenas, vale trocar o `mailto:` do
-  rodapé por um Google Form que registre o pedido.
+- **Descadastro tem um passo manual.** O rodapé do email leva ao
+  [formulário de saída](https://forms.gle/umX8akZhxpuudF4SA), que registra o
+  pedido — mas alguém precisa marcar a pessoa como `inativa` na planilha. O Form
+  não mexe na planilha sozinho. Vale checar as respostas antes de cada envio: é
+  o único ponto do fluxo em que esquecer tem consequência para quem pediu para
+  sair.
 - **Sem métrica de abertura.** O Gmail não informa quem abriu.
 
 ## Identidade visual

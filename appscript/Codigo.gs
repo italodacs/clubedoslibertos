@@ -31,7 +31,7 @@ const CONFIG = {
   ABA_TESTE: 'teste',
 
   // As colunas são achadas pelo cabeçalho da primeira linha: qualquer coluna
-  // cujo título contenha "email", "nome" ou "ativo" é reconhecida, em qualquer
+  // cujo título contenha "email", "nome" ou "status" é reconhecida, em qualquer
   // ordem. Sem cabeçalho reconhecível, cai para A = nome e B = email.
 
   REMETENTE_NOME: 'Clube dos Libertos',
@@ -43,9 +43,10 @@ const CONFIG = {
   LOGO_URL:
     'https://raw.githubusercontent.com/italodacs/clubedoslibertos/main/assets/logo.png',
 
-  // Link de saída da lista. Um Google Form é melhor que mailto: chega
-  // organizado e não depende de alguém ler a caixa de entrada.
-  SAIR_DA_LISTA_URL: 'mailto:clubedoslibertos@gmail.com?subject=Sair%20da%20newsletter',
+  // Formulário de saída da lista. Quem responde precisa ser marcado como
+  // "inativa" na coluna de status da planilha — o Form registra o pedido, mas
+  // não mexe na planilha sozinho.
+  SAIR_DA_LISTA_URL: 'https://forms.gle/umX8akZhxpuudF4SA',
 
   MODELO_GEMINI: 'gemini-3.6-flash',
 };
@@ -452,13 +453,7 @@ function lerDestinatarios_(nomeDaAba) {
     const email = String(linha[col.email] || '').trim();
     if (!email || email.indexOf('@') === -1) continue;
 
-    if (col.ativo !== -1) {
-      const ativo = String(linha[col.ativo] || '').trim().toLowerCase();
-      // Vazio conta como ativo: quem sai é marcado explicitamente.
-      if (ativo && ['nao', 'não', 'no', 'false', '0'].indexOf(ativo) !== -1) {
-        continue;
-      }
-    }
+    if (col.ativo !== -1 && !estaAtivo_(linha[col.ativo])) continue;
 
     const chave = email.toLowerCase();
     if (vistos[chave]) continue; // ninguém recebe duas vezes
@@ -473,6 +468,24 @@ function lerDestinatarios_(nomeDaAba) {
   return pessoas;
 }
 
+/**
+ * Decide se a pessoa recebe, a partir da coluna de status.
+ *
+ * Célula **vazia conta como ativa**: ninguém deixa de receber por esquecimento
+ * de preencher. O que tira da lista é valor explícito de saída — "inativa",
+ * "não", "descadastrado".
+ *
+ * O teste é por prefixo `inativ` de propósito: "inativa" e "inativo" contam,
+ * "ativa" e "ativo" não, e a comparação não depende de gênero nem de acento.
+ */
+function estaAtivo_(valor) {
+  const v = String(valor || '').trim().toLowerCase();
+  if (!v) return true;
+  if (v.indexOf('inativ') !== -1) return false;
+  if (v.indexOf('descadastr') !== -1 || v.indexOf('desinscr') !== -1) return false;
+  return ['nao', 'não', 'no', 'false', '0', 'sair', 'removido'].indexOf(v) === -1;
+}
+
 /** Acha as colunas pelo cabeçalho. Sem cabeçalho útil, A = nome e B = email. */
 function acharColunas_(cabecalho) {
   const col = { nome: -1, email: -1, ativo: -1 };
@@ -485,7 +498,13 @@ function acharColunas_(cabecalho) {
       col.email = i;
     } else if (col.nome === -1 && t.indexOf('nome') !== -1) {
       col.nome = i;
-    } else if (col.ativo === -1 && (t.indexOf('ativo') !== -1 || t.indexOf('receb') !== -1)) {
+    } else if (
+      col.ativo === -1 &&
+      (t.indexOf('status') !== -1 ||
+        t.indexOf('ativo') !== -1 ||
+        t.indexOf('ativa') !== -1 ||
+        t.indexOf('receb') !== -1)
+    ) {
       col.ativo = i;
     }
   });

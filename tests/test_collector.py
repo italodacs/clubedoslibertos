@@ -179,3 +179,28 @@ def test_item_sem_link_e_descartado():
         </channel></rss>"""
     itens, _ = coletar([FONTE_RSS], _buscador({FONTE_RSS["url"]: rss_sem_link}))
     assert itens == []
+
+
+def test_descarta_item_que_sai_do_dominio_da_fonte():
+    """A fonte da informacao e o link: vaga do Cia de Estagios que aponta para
+    estagio.alupar.com.br nao e pagina do Cia de Estagios."""
+    pagina = """<div class="c"><a href="https://estagio.alupar.com.br/vaga">Estagio Alupar 2026</a></div>
+                <div class="c"><a href="https://exemplo.org/vaga">Estagio Exemplo 2026</a></div>"""
+    fonte = {**FONTE_HTML, "seletor": ".c"}
+    itens, _ = coletar([fonte], _buscador({fonte["url"]: pagina}))
+    assert [i.titulo for i in itens] == ["Estagio Exemplo 2026"]
+
+
+def test_subdominio_da_propria_fonte_e_aceito():
+    """loja.sebrae.com.br continua sendo Sebrae."""
+    fonte = {**FONTE_HTML, "url": "https://sebrae.com.br/cursos", "seletor": ".c"}
+    pagina = '<div class="c"><a href="https://loja.sebrae.com.br/curso-x">Curso X</a></div>'
+    itens, _ = coletar([fonte], _buscador({fonte["url"]: pagina}))
+    assert len(itens) == 1
+
+
+def test_dominio_diferente_com_nome_parecido_e_descartado():
+    fonte = {**FONTE_HTML, "url": "https://exemplo.org/lista", "seletor": ".c"}
+    pagina = '<div class="c"><a href="https://exemplo.org.br/vaga">Vaga Sósia</a></div>'
+    itens, _ = coletar([fonte], _buscador({fonte["url"]: pagina}))
+    assert itens == []

@@ -5,7 +5,7 @@ import logging
 import re
 from collections.abc import Callable
 from pathlib import Path
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit
 
 import feedparser
 import requests
@@ -23,6 +23,22 @@ USER_AGENT = (
 )
 
 _DATA_BR = re.compile(r"(\d{1,2})/(\d{1,2})/(\d{4})")
+
+# Sufixos de dois níveis: em "loja.sebrae.com.br" o domínio registrável são os
+# três últimos rótulos, não os dois.
+_SUFIXOS_COMPOSTOS = ("com.br", "org.br", "gov.br", "net.br", "edu.br", "co.uk")
+
+
+def dominio_base(url: str) -> str:
+    """Domínio registrável da URL, para comparar fonte e destino.
+
+    `loja.sebrae.com.br` e `sebrae.com.br` são a mesma casa;
+    `estagio.alupar.com.br` e `ciadeestagios.com.br` não são.
+    """
+    host = urlsplit(url).netloc.lower().split(":")[0]
+    partes = host.split(".")
+    n = 3 if host.endswith(_SUFIXOS_COMPOSTOS) else 2
+    return ".".join(partes[-n:]) if len(partes) >= n else host
 
 
 def buscar_http(url: str, timeout: int = TIMEOUT_PADRAO) -> str:
@@ -107,6 +123,12 @@ def _do_html(conteudo: str, fonte: dict) -> list[Oportunidade]:
         url = urljoin(fonte["url"], ancora["href"])
         # javascript:, mailto: e afins não são oportunidade.
         if not url.startswith(("http://", "https://")):
+            continue
+        # A fonte da informação é o link: item que sai do domínio da fonte não é
+        # página dela. Vaga do Cia de Estágios apontando para
+        # estagio.alupar.com.br fica de fora.
+        if dominio_base(url) != dominio_base(fonte["url"]):
+            log.info("fora do dominio de %s: %s", fonte["nome"], url)
             continue
         titulo = _titulo_de(bloco, ancora, modo_titulo)
         # Título vazio viraria uma linha em branco no email.

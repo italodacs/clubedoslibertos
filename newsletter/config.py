@@ -12,14 +12,15 @@ LOGO_URL = (
     "/main/newsletter/assets/logo.png"
 )
 
-# Quantos itens de cada categoria entram na edição. Definido pela Presidência
-# em 25/08/2026. O corte é por categoria, não por bloco: "Trainees e estágios"
-# comporta 10 de cada, e o bloco de formações reúne educação e bolsas.
+# Quantos itens de cada categoria entram na edição. Revisado pela Presidência em
+# 26/08/2026. O corte é por categoria, não por bloco: "Trainees e estágios"
+# reúne duas categorias, e sem cota separada uma delas ocuparia as vagas da
+# outra. Edição cheia = 21 itens.
 LIMITES_POR_CATEGORIA = {
-    "trainee": 10,
-    "estagio": 10,
-    "educacao": 7,
-    "edital": 7,
+    "trainee": 6,
+    "estagio": 5,
+    "educacao": 5,
+    "edital": 5,
 }
 
 ROXO = "#5C1A88"

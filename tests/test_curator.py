@@ -131,9 +131,9 @@ def test_curar_corta_no_limite_de_cada_categoria():
         for i in range(30)
     ]
     blocos = curar(itens, set(), HOJE, _aceita_tudo)
-    # 10 trainee + 10 estagio dividem o mesmo bloco; educacao tem teto de 7.
-    assert len(blocos["Trainees e estágios"]) == 20
-    assert len(blocos["Editais e formações"]) == 7
+    # 6 trainee + 5 estagio dividem o mesmo bloco; educacao tem teto de 5.
+    assert len(blocos["Trainees e estágios"]) == 11
+    assert len(blocos["Editais e formações"]) == 5
 
 
 def test_categoria_nao_rouba_a_cota_da_outra_no_mesmo_bloco():
@@ -146,7 +146,7 @@ def test_categoria_nao_rouba_a_cota_da_outra_no_mesmo_bloco():
     ]
     blocos = curar(itens, set(), HOJE, _aceita_tudo)
     escolhidos = blocos["Trainees e estágios"]
-    assert sum(1 for op in escolhidos if op.categoria == "trainee") == 10
+    assert sum(1 for op in escolhidos if op.categoria == "trainee") == 6
     assert sum(1 for op in escolhidos if op.categoria == "estagio") == 3
 
 
@@ -184,8 +184,8 @@ def test_curar_nao_verifica_link_de_item_que_o_corte_descartaria():
 
     itens = [_op(f"https://exemplo.org/{i}", titulo=f"Trainee {i}") for i in range(60)]
     blocos = curar(itens, set(), HOJE, registrando)
-    assert len(blocos["Trainees e estágios"]) == 10
-    assert len(visitados) == 10, f"verificou {len(visitados)} links para publicar 10"
+    assert len(blocos["Trainees e estágios"]) == 6
+    assert len(visitados) == 6, f"verificou {len(visitados)} links para publicar 6"
 
 
 def test_curar_desce_a_lista_quando_o_link_do_topo_esta_morto():
@@ -194,7 +194,7 @@ def test_curar_desce_a_lista_quando_o_link_do_topo_esta_morto():
     mortos = {"https://exemplo.org/0", "https://exemplo.org/1"}
     blocos = curar(itens, set(), HOJE, lambda url: url not in mortos)
     urls = [op.url for op in blocos["Trainees e estágios"]]
-    assert len(urls) == 10
+    assert len(urls) == 6
     assert not (mortos & set(urls))
 
 
@@ -218,3 +218,41 @@ def test_curar_mantem_afirmativa_no_topo_apos_a_verificacao():
     itens.append(_op("https://exemplo.org/afirm", titulo="Trainee Y", afirmativa=True))
     blocos = curar(itens, set(), HOJE, _aceita_tudo)
     assert blocos["Trainees e estágios"][0].afirmativa is True
+
+
+def test_curar_com_folga_seleciona_mais_candidatos_que_a_cota():
+    """O enriquecimento descarta item sem prazo, entao a selecao precisa de
+    folga: cortar na cota antes disso deixaria a edicao curta."""
+    itens = [_op(f"https://exemplo.org/{i}", titulo=f"Trainee {i}") for i in range(40)]
+    blocos = curar(itens, set(), HOJE, _aceita_tudo, folga=3)
+    assert len(blocos["Trainees e estágios"]) == 18
+
+
+def test_agrupar_e_cortar_aplica_a_cota_por_categoria():
+    from newsletter.curator import agrupar_e_cortar
+
+    itens = [_op(f"https://exemplo.org/t{i}", titulo=f"Trainee {i}") for i in range(20)]
+    itens += [
+        _op(f"https://exemplo.org/e{i}", titulo=f"Estagio {i}", categoria="estagio")
+        for i in range(20)
+    ]
+    blocos = agrupar_e_cortar(itens)
+    escolhidos = blocos["Trainees e estágios"]
+    assert sum(1 for o in escolhidos if o.categoria == "trainee") == 6
+    assert sum(1 for o in escolhidos if o.categoria == "estagio") == 5
+
+
+def test_agrupar_e_cortar_mantem_afirmativa_no_topo():
+    from newsletter.curator import agrupar_e_cortar
+
+    comum = _op("https://exemplo.org/a", titulo="Trainee Comum")
+    afirm = _op("https://exemplo.org/b", titulo="Trainee Afirmativo", afirmativa=True)
+    blocos = agrupar_e_cortar([comum, afirm])
+    assert blocos["Trainees e estágios"][0] == afirm
+
+
+def test_agrupar_e_cortar_cria_os_dois_blocos_mesmo_vazios():
+    from newsletter.curator import agrupar_e_cortar
+
+    blocos = agrupar_e_cortar([])
+    assert set(blocos) == {"Trainees e estágios", "Editais e formações"}

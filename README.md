@@ -13,12 +13,17 @@ Toda segunda, 07:00 (Brasília), o GitHub Actions roda o pipeline:
 1. `collector` varre as fontes fixas de `newsletter/sources.yml`
 2. `search` consulta o Serper (Google) e `discovery` manda o Gemini classificar o
    que voltou — separando oportunidade real de artigo sobre o assunto
-3. `curator` deduplica contra o histórico, descarta link morto e prazo vencido,
-   ordena por relevância (afirmativas primeiro) e corta na cota de cada categoria
-4. `writer` redige a abertura e os resumos
-5. `renderer` monta o HTML
-6. `publisher` cria a campanha **rascunho** no Brevo
-7. Chega um email em clubedoslibertos@gmail.com com o link da campanha
+3. `curator` deduplica contra o histórico, descarta link morto, prazo vencido e
+   item cujo link sai do domínio da fonte, ordena por relevância e separa
+   candidatos com folga
+4. `enrich` abre a página de cada candidato e o Gemini extrai empresa e prazo.
+   **Item sem prazo não publica** — e é aqui que cai vídeo, artigo e programa
+   encerrado que continua no ar
+5. `curator` aplica a cota final de cada categoria
+6. `writer` redige a abertura e os resumos
+7. `renderer` monta o HTML
+8. `publisher` cria a campanha **rascunho** no Brevo
+9. `qa` analisa a edição e o resultado vai no email de aviso, com o link da campanha
 
 Quem revisa preenche ou apaga os blocos manuais ("Vagas da semana" e "Espaço do
 Clube") e clica em Enviar. **O pipeline nunca envia sozinho.**
@@ -27,10 +32,10 @@ Clube") e clica em Enviar. **O pipeline nunca envia sozinho.**
 
 | Categoria | Itens |
 |---|---|
-| Trainee | 10 |
-| Estágio | 10 |
-| Educação gratuita | 7 |
-| Editais, bolsas e intercâmbio | 7 |
+| Trainee | 6 |
+| Estágio | 5 |
+| Educação gratuita | 5 |
+| Editais, bolsas e intercâmbio | 5 |
 
 A cota é por categoria, não por bloco: trainee e estágio dividem o mesmo bloco
 da edição, e sem cota separada uma semana farta de trainees ocuparia as vagas

@@ -80,11 +80,35 @@ def pontuar(op: Oportunidade) -> int:
     return pontos
 
 
+def agrupar_e_cortar(
+    oportunidades: Iterable[Oportunidade],
+) -> dict[str, list[Oportunidade]]:
+    """Agrupa nos blocos da edição e aplica a cota de cada categoria.
+
+    Etapa final, depois do enriquecimento: só aqui se sabe quais itens
+    sobreviveram à exigência de prazo.
+    """
+    blocos: dict[str, list[Oportunidade]] = {
+        "Trainees e estágios": [],
+        "Editais e formações": [],
+    }
+    restante = dict(LIMITES_POR_CATEGORIA)
+
+    for op in sorted(oportunidades, key=pontuar, reverse=True):
+        if restante.get(op.categoria, 0) <= 0:
+            continue
+        restante[op.categoria] -= 1
+        blocos[bloco_de(op.categoria)].append(op)
+
+    return blocos
+
+
 def curar(
     oportunidades: Iterable[Oportunidade],
     historico: set[str],
     hoje: datetime.date,
     verificar_link: Callable[[str], bool],
+    folga: int = 1,
 ) -> dict[str, list[Oportunidade]]:
     """Pipeline de curadoria completo, agrupando por bloco da edição.
 
@@ -112,7 +136,7 @@ def curar(
     for categoria, lista in candidatos.items():
         lista.sort(key=pontuar, reverse=True)
         escolhidos = _com_link_vivo(
-            lista, verificar_link, LIMITES_POR_CATEGORIA[categoria]
+            lista, verificar_link, LIMITES_POR_CATEGORIA[categoria] * folga
         )
         blocos[bloco_de(categoria)].extend(escolhidos)
 
@@ -138,7 +162,7 @@ def _com_link_vivo(
     """
     escolhidos: list[Oportunidade] = []
     for tentativa, op in enumerate(ordenados, start=1):
-        if tentativa > MAX_VERIFICACOES_POR_CATEGORIA:
+        if tentativa > max(MAX_VERIFICACOES_POR_CATEGORIA, limite * 2):
             log.warning(
                 "desisti apos %d verificacoes de link; %d item(ns) na categoria",
                 MAX_VERIFICACOES_POR_CATEGORIA,

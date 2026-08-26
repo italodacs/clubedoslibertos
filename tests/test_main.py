@@ -31,6 +31,14 @@ def _deps(tmp_path, **sobrescritas):
             [],
         ),
         "verificar_link": lambda url: True,
+        # Por padrao o enriquecimento e transparente: devolve o que recebeu.
+        "enriquecer": lambda finalistas: (list(finalistas), []),
+        "analisar": lambda itens: {
+            "locais": [],
+            "problemas": [],
+            "parecer": "ok",
+            "erro": None,
+        },
         "escrever": lambda blocos: ("Boa semana!", blocos),
         "publicar": lambda html, assunto: 4242,
         "avisar": lambda assunto, corpo: avisos.append((assunto, corpo)),
@@ -38,6 +46,79 @@ def _deps(tmp_path, **sobrescritas):
     }
     base.update(sobrescritas)
     return base, avisos
+
+
+def test_enriquecimento_pode_descartar_item_e_a_edicao_segue(tmp_path):
+    """Item sem prazo cai no enriquecimento; a edicao sai com o que sobrou."""
+    deps, _ = _deps(
+        tmp_path,
+        enriquecer=lambda fs: ([f for f in fs if f.categoria == "trainee"], []),
+    )
+    relatorio = executar(deps)
+    assert relatorio["total"] == 1
+
+
+def test_zero_apos_o_enriquecimento_aborta_sem_publicar(tmp_path):
+    """Se nada tem prazo, nao existe edicao — e nao se cria rascunho vazio."""
+    publicou = []
+    deps, avisos = _deps(
+        tmp_path,
+        enriquecer=lambda fs: ([], []),
+        publicar=lambda html, assunto: publicou.append(True),
+    )
+    with pytest.raises(EdicaoVazia):
+        executar(deps)
+    assert publicou == []
+    assert len(avisos) == 1
+
+
+def test_erro_do_enriquecimento_entra_no_relatorio(tmp_path):
+    deps, _ = _deps(tmp_path, enriquecer=lambda fs: (list(fs), ["cota esgotada"]))
+    relatorio = executar(deps)
+    assert relatorio["erros_enriquecimento"] == ["cota esgotada"]
+
+
+def test_historico_registra_o_titulo_enriquecido(tmp_path):
+    """O titulo que vai para o historico e o publicado, com a empresa."""
+    import dataclasses
+
+    def com_empresa(fs):
+        return [dataclasses.replace(f, titulo=f"Empresa — {f.titulo}") for f in fs], []
+
+    deps, _ = _deps(tmp_path, enriquecer=com_empresa)
+    executar(deps)
+    dados = json.loads((tmp_path / "history.json").read_text(encoding="utf-8"))
+    assert dados["itens"][0]["titulo"].startswith("Empresa — ")
+
+
+def test_aviso_de_sucesso_carrega_o_relatorio_da_analise(tmp_path):
+    """Quem revisa precisa saber onde olhar antes de clicar em enviar."""
+    deps, avisos = _deps(
+        tmp_path,
+        analisar=lambda itens: {
+            "locais": ["'Trainee 2024': titulo cita 2024, ano ja passou"],
+            "problemas": ["'Curso X' parece publicidade"],
+            "parecer": "Revisar dois itens",
+            "erro": None,
+        },
+    )
+    executar(deps)
+    _, corpo = avisos[0]
+    assert "2024" in corpo
+    assert "publicidade" in corpo
+    assert "Revisar dois itens" in corpo
+
+
+def test_falha_da_analise_nao_impede_o_rascunho(tmp_path):
+    """A analise e alerta, nao portao: se ela quebrar, a edicao ainda sai."""
+
+    def explode(itens):
+        raise RuntimeError("analise quebrou")
+
+    deps, avisos = _deps(tmp_path, analisar=explode)
+    relatorio = executar(deps)
+    assert relatorio["campanha_id"] == 4242
+    assert len(avisos) == 1
 
 
 def test_semana_iso_usa_o_padrao_do_obsidian():

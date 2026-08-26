@@ -16,9 +16,11 @@ from newsletter import (
     collector,
     curator,
     discovery,
+    enrich,
     history,
     notifier,
     publisher,
+    qa,
     renderer,
     search,
     writer,
@@ -29,6 +31,9 @@ log = logging.getLogger(__name__)
 RAIZ = Path(__file__).parent.parent
 CAMINHO_HISTORICO = RAIZ / "history.json"
 CAMINHO_SAIDA = RAIZ / "saida" / "edicao.html"
+
+
+FOLGA_DE_CANDIDATOS = 3
 
 
 class EdicaoVazia(Exception):
@@ -63,6 +68,19 @@ def _descobrir(buscar_web, chamar_texto) -> tuple[list, list[str]]:
     return itens, [*erros_busca, *erros_modelo]
 
 
+def _baixar_paginas(oportunidades) -> dict[str, str]:
+    """Busca a página de cada finalista. Página que não responde fica de fora,
+    e o item cai por falta de prazo — melhor do que publicar data inventada."""
+    paginas = {}
+    for op in oportunidades:
+        try:
+            paginas[op.url] = collector.buscar_http(op.url, timeout=20)
+        except Exception as erro:
+            log.info("nao baixei %s: %s", op.url, erro)
+    log.info("baixei %d de %d paginas", len(paginas), len(oportunidades))
+    return paginas
+
+
 def executar(dependencias: dict) -> dict:
     """Roda o pipeline. Devolve o relatório da execução."""
     hoje = dependencias["hoje"]
@@ -74,20 +92,32 @@ def executar(dependencias: dict) -> dict:
     achadas, erros_discovery = dependencias["descobrir"]()
     log.info("coletadas %d das fontes fixas, %d do discovery", len(fixas), len(achadas))
 
-    blocos = curator.curar(
+    # Folga de 3: o enriquecimento exige prazo e descarta boa parte, então
+    # cortar na cota antes dele deixaria a edição curta.
+    candidatos = curator.curar(
         [*fixas, *achadas],
         history.carregar(caminho_historico),
         hoje,
         dependencias["verificar_link"],
+        folga=FOLGA_DE_CANDIDATOS,
     )
+    finalistas = [op for lista in candidatos.values() for op in lista]
+    log.info("%d candidatos para enriquecer", len(finalistas))
+
+    enriquecidos, erros_enriquecimento = dependencias["enriquecer"](finalistas)
+    log.info("%d sobreviveram ao enriquecimento", len(enriquecidos))
+
+    blocos = curator.agrupar_e_cortar(enriquecidos)
     total = sum(len(itens) for itens in blocos.values())
 
     relatorio = {
         "semana": semana,
         "total": total,
+        "candidatos": len(finalistas),
         "por_bloco": {bloco: len(itens) for bloco, itens in blocos.items()},
         "fontes_com_falha": fontes_com_falha,
         "erros_discovery": erros_discovery,
+        "erros_enriquecimento": erros_enriquecimento,
     }
 
     if total == 0:
@@ -114,14 +144,27 @@ def executar(dependencias: dict) -> dict:
 
     # O histórico só é gravado depois de publicar: gravar antes sumiria com a
     # oportunidade na semana seguinte se a publicação falhasse.
-    publicados = [op for itens in blocos.values() for op in itens]
-    history.registrar(caminho_historico, publicados, hoje)
+    history.registrar(
+        caminho_historico,
+        [op for itens in blocos.values() for op in itens],
+        hoje,
+    )
 
     relatorio["campanha_id"] = campanha_id
     relatorio["url_campanha"] = publisher.URL_CAMPANHA.format(id=campanha_id)
+
+    # A análise é alerta, não portão: roda depois de o rascunho já existir, e
+    # falhar nela não pode custar a edição.
+    publicados = [op for itens in blocos.values() for op in itens]
+    try:
+        analise = qa.formatar_relatorio(dependencias["analisar"](publicados), total)
+    except Exception as erro:
+        log.warning("analise falhou: %s", erro)
+        analise = f"(a analise nao rodou: {erro})"
+
     avisar(
         f"[Newsletter {semana}] rascunho pronto para revisao",
-        f"{relatorio['url_campanha']}\n\n{relatorio}",
+        f"{relatorio['url_campanha']}\n\n{analise}\n\n{relatorio}",
     )
     return relatorio
 
@@ -154,9 +197,18 @@ def main() -> int:
         ),
         "descobrir": lambda: _descobrir(buscar_web, chamar_texto),
         "verificar_link": _verificar_link,
+        "enriquecer": lambda finalistas: enrich.enriquecer(
+            finalistas,
+            _baixar_paginas(finalistas),
+            chamar_texto,
+            datetime.date.today(),
+        ),
         "escrever": lambda blocos: writer.escrever(blocos, chamar_texto),
         "publicar": lambda html, assunto: publisher.criar_rascunho(
             html, assunto, lista_id, brevo_key
+        ),
+        "analisar": lambda itens: qa.analisar(
+            itens, datetime.date.today(), chamar_texto
         ),
         "avisar": lambda assunto, corpo: notifier.avisar(assunto, corpo, brevo_key),
         "salvar_html": salvar_html,

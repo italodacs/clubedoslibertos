@@ -148,10 +148,42 @@ Funções puras, sem rede, sobre a união de `collector` + `discovery`:
    identificável é mantido mas marcado como "prazo não informado"
 4. **Ranking de relevância** — afirmativas primeiro; depois aderência às áreas e
    estados dos membros; depois abrangência nacional ou remota
-5. **Corte** — cota por categoria, definida pela Presidência em 25/08/2026:
-   10 trainees, 10 estágios, 7 de educação e 7 de bolsas/intercâmbio. A cota é
+5. **Regra de domínio** — item de fonte fixa cujo link sai do domínio da fonte é
+   descartado. A fonte da informação é o link: vaga listada pelo Cia de Estágios
+   que aponta para `estagio.alupar.com.br` não é página do Cia de Estágios
+6. **Seleção com folga** — passa adiante 3× a cota, porque o enriquecimento
+   descarta boa parte
+7. **Corte final** — cota por categoria, revisada em 26/08/2026: 6 trainees,
+   5 estágios, 5 de educação e 5 de bolsas/intercâmbio (21 no total). A cota é
    por categoria e não por bloco: "Trainees e estágios" reúne duas categorias, e
    sem cota separada um dia farto de trainees ocuparia as vagas de estágio
+
+### 4.4b `enrich` — abre a página de cada finalista
+
+**Acrescentado em 26/08/2026.** A listagem quase nunca traz a data limite: ela
+está dentro da página da vaga. Na edição de teste, **zero** dos 34 itens tinham
+prazo. Esta etapa busca a página de cada finalista e o Gemini extrai empresa e
+prazo dali.
+
+Três regras duras: item sem prazo encontrado não publica; prazo vencido não
+publica, mesmo com a página no ar; URL que o modelo devolver e que não estava na
+lista é ignorada. O título ganha a empresa na frente, salvo quando ela já
+aparece nele.
+
+É também a peneira que as fontes fixas não tinham — antes item de fonte fixa ia
+direto para a edição, o que deixava passar vídeo, artigo e programa encerrado que
+continua publicado.
+
+### 4.4c `qa` — análise da edição pronta
+
+**Acrescentado em 26/08/2026.** Duas camadas: verificações determinísticas (ano
+passado no título, prazo vencido ou ausente, título genérico, URL repetida) e um
+parecer do Gemini sobre o que código não pega — item que parece publicidade,
+título que não diz de quem é a vaga, resumo que contradiz o título.
+
+É **alerta, não portão**: o relatório vai no email de aviso, para quem revisa
+saber onde olhar. Roda depois de o rascunho existir, e falhar nela não custa a
+edição
 
 ### 4.5 `writer` — redação
 

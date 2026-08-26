@@ -15,7 +15,7 @@ O menu tem três itens, na ordem em que devem ser usados:
 | Item | O que faz |
 |---|---|
 | **1. Pré-visualizar** | Monta a edição, mostra quantos itens por bloco, quantos destinatários e todos os avisos da validação. Não envia nada |
-| **2. Enviar teste para mim** | Manda a edição só para você, com `[TESTE]` no assunto |
+| **2. Enviar teste** | Manda a edição para os destinatários da aba `teste`, com `[TESTE]` no assunto |
 | **3. Enviar para a lista** | Envia para todos os ativos da planilha, com confirmação antes |
 
 ## Instalação
@@ -28,11 +28,14 @@ O menu tem três itens, na ordem em que devem ser usados:
    (Documentos, Planilhas, Gmail e requisições externas)
 5. Recarregue o Doc — o menu **Newsletter** aparece
 
-Nenhum ID precisa ser preenchido: o Doc, a planilha e a aba já estão no `CONFIG`.
+Nenhum ID precisa ser preenchido: o Doc, a planilha e as abas (`db` e `teste`)
+já estão no `CONFIG`.
 
 ## A planilha
 
-Aba `db`.
+Duas abas, mesmo formato: **`db`** com a lista real e **`teste`** com quem
+recebe o teste. O envio de teste lê a aba `teste`; o envio para a lista lê a
+`db`. Nenhum email de destinatário fica escrito no código.
 
 As colunas são descobertas pelo **cabeçalho da primeira linha**, em qualquer
 ordem. Qualquer coluna cujo título contenha:

@@ -27,15 +27,15 @@ const CONFIG = {
   PLANILHA_ID: '1znLhBKmn-PBChZZm8IOaDSI9Eojj5ayZGPQ3SJoEti8',
   ABA: 'db',
 
+  // Aba com os destinatários de teste. Mesmo formato da aba principal.
+  ABA_TESTE: 'teste',
+
   // As colunas são achadas pelo cabeçalho da primeira linha: qualquer coluna
   // cujo título contenha "email", "nome" ou "ativo" é reconhecida, em qualquer
   // ordem. Sem cabeçalho reconhecível, cai para A = nome e B = email.
 
   REMETENTE_NOME: 'Clube dos Libertos',
   RESPONDER_PARA: 'clubedoslibertos@gmail.com',
-
-  // Para quem vai o "Enviar teste".
-  EMAIL_DE_TESTE: 'clubedoslibertos@gmail.com',
 
   INSTAGRAM_URL: 'https://www.instagram.com/clubedoslibertos/',
   LINKEDIN_URL: 'https://www.linkedin.com/company/clube-dos-libertos-black-network/',
@@ -96,7 +96,14 @@ function preVisualizar() {
     if (n > 0) linhas.push('  ' + b.titulo + ': ' + n);
   });
   linhas.push('', 'Total: ' + edicao.total + ' itens');
-  linhas.push('', 'Destinatários ativos: ' + lerDestinatarios_().length);
+  linhas.push(
+    '',
+    'Destinatários na aba "' + CONFIG.ABA + '": ' + lerDestinatarios_().length,
+    'Destinatários na aba "' +
+      CONFIG.ABA_TESTE +
+      '": ' +
+      lerDestinatarios_(CONFIG.ABA_TESTE).length
+  );
   if (edicao.avisos.length) {
     linhas.push('', 'ATENÇÃO:');
     edicao.avisos.forEach(function (a) {
@@ -106,20 +113,39 @@ function preVisualizar() {
   alerta_('Pré-visualização', linhas.join('\n'));
 }
 
-/** Envia a edição só para EMAIL_DE_TESTE. */
+/** Envia a edição para os destinatários da aba de teste, com [TESTE] no assunto. */
 function enviarTeste() {
   const edicao = montarEdicao_();
-  enviarUm_(
-    { nome: 'Teste', email: CONFIG.EMAIL_DE_TESTE },
-    edicao,
-    '[TESTE] ' + edicao.assunto
-  );
-  alerta_(
-    'Teste enviado',
+  const pessoas = lerDestinatarios_(CONFIG.ABA_TESTE);
+
+  if (!pessoas.length) {
+    throw new Error(
+      'Nenhum destinatário na aba "' +
+        CONFIG.ABA_TESTE +
+        '". Coloque pelo menos um email lá antes de testar.'
+    );
+  }
+
+  const falhas = [];
+  pessoas.forEach(function (pessoa) {
+    try {
+      enviarUm_(pessoa, edicao, '[TESTE] ' + edicao.assunto);
+    } catch (erro) {
+      falhas.push(pessoa.email + ': ' + erro.message);
+    }
+  });
+
+  let msg =
     'Enviado para ' +
-      CONFIG.EMAIL_DE_TESTE +
-      '.\n\nAbra no celular antes de mandar para a lista.'
-  );
+    (pessoas.length - falhas.length) +
+    ' de ' +
+    pessoas.length +
+    ' na aba "' +
+    CONFIG.ABA_TESTE +
+    '".';
+  if (falhas.length) msg += '\n\nFalhas:\n' + falhas.join('\n');
+  msg += '\n\nAbra no celular antes de mandar para a lista.';
+  alerta_('Teste enviado', msg);
 }
 
 /** Envia para todos os destinatários ativos da planilha. */
@@ -398,19 +424,18 @@ function validar_(bruto, textoDoc) {
 // ===========================================================================
 
 /**
- * Destinatários ativos.
+ * Destinatários ativos de uma aba. Sem argumento, usa a aba principal.
  *
  * As colunas são descobertas pelo cabeçalho, não fixadas por posição: mexer na
  * ordem das colunas da planilha é a coisa mais fácil de acontecer e a mais
  * chata de descobrir depois — o sintoma seria email indo para a coluna de nome.
  */
-function lerDestinatarios_() {
+function lerDestinatarios_(nomeDaAba) {
+  const nome = nomeDaAba || CONFIG.ABA;
   const planilha = SpreadsheetApp.openById(CONFIG.PLANILHA_ID);
-  const aba = CONFIG.ABA
-    ? planilha.getSheetByName(CONFIG.ABA)
-    : planilha.getSheets()[0];
+  const aba = nome ? planilha.getSheetByName(nome) : planilha.getSheets()[0];
   if (!aba) {
-    throw new Error('Aba "' + CONFIG.ABA + '" não encontrada na planilha.');
+    throw new Error('Aba "' + nome + '" não encontrada na planilha.');
   }
 
   const ultima = aba.getLastRow();

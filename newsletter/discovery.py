@@ -10,7 +10,11 @@ from newsletter.models import CATEGORIAS, Oportunidade
 
 log = logging.getLogger(__name__)
 
-MODELO = "gemini-2.5-flash"
+# Conta nova do AI Studio não tem acesso a modelo descontinuado: em 26/08/2026
+# o `gemini-2.5-flash` respondeu 404 apontando para este. Quando isso repetir, a
+# própria mensagem de erro diz qual usar — e o pipeline degrada em vez de
+# quebrar, então o sintoma é edição sem resumo, não edição faltando.
+MODELO = "gemini-3.6-flash"
 
 PROMPT = """Você pesquisa oportunidades para o Clube dos Libertos, uma rede de
 profissionais e estudantes negros no Brasil.

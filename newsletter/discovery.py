@@ -1,6 +1,6 @@
 """Classificação dos resultados de busca em oportunidades.
 
-Divisão de trabalho deliberada: o Brave (em `newsletter.search`) devolve as
+Divisão de trabalho deliberada: o Serper (em `newsletter.search`) devolve as
 URLs, e o Gemini **apenas classifica** o que a busca achou — separa oportunidade
 de artigo, extrai prazo, confirma categoria. O modelo nunca produz URL.
 
@@ -51,7 +51,7 @@ Regras:
 def ferramentas(com_busca: bool) -> list:
     """Quais ferramentas a chamada leva.
 
-    Hoje nenhuma das duas usa busca: quem busca é o Brave. A opção continua
+    Hoje nenhuma das duas usa busca: quem busca é o Serper. A opção continua
     aqui porque no free tier o grounding de Google Search não tem cota, e ligar
     a ferramenta à toa fazia a chamada morrer com 429 mesmo sem precisar dela.
     """

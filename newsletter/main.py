@@ -56,7 +56,7 @@ def _verificar_link(url: str) -> bool:
 
 
 def _descobrir(buscar_web, chamar_texto) -> tuple[list, list[str]]:
-    """Busca no Brave e manda o Gemini classificar o que voltou."""
+    """Busca no Serper e manda o Gemini classificar o que voltou."""
     resultados, erros_busca = search.pesquisar(search.CONSULTAS, buscar_web)
     log.info("busca na web devolveu %d resultados", len(resultados))
     itens, erros_modelo = discovery.descobrir(resultados, chamar_texto)
@@ -132,14 +132,14 @@ def main() -> int:
     )
 
     gemini_key = os.environ["GEMINI_API_KEY"]
-    brave_key = os.environ["BRAVE_API_KEY"]
+    serper_key = os.environ["SERPER_KEY"]
     brevo_key = os.environ["BREVO_API_KEY"]
     lista_id = int(os.environ["BREVO_LIST_ID"])
 
-    # Nenhuma das duas chamadas leva ferramenta de busca: quem busca e o Brave.
+    # Nenhuma das duas chamadas leva ferramenta de busca: quem busca e o Serper.
     # O Gemini classifica o que a busca achou e redige a edicao.
     chamar_texto = discovery.cliente_gemini(gemini_key, com_busca=False)
-    buscar_web = search.cliente_brave(brave_key)
+    buscar_web = search.cliente_serper(serper_key)
 
     def salvar_html(html: str) -> None:
         CAMINHO_SAIDA.parent.mkdir(parents=True, exist_ok=True)

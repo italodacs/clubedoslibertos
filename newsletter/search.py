@@ -1,10 +1,11 @@
-"""Busca na web pela API do Brave Search.
+"""Busca na web pela API do Serper (google.serper.dev).
 
 O Gemini free tier não tem cota para o grounding de Google Search, então quem
-descobre oportunidade fora das fontes fixas é o Brave. A divisão de trabalho é
-deliberada: **o Brave devolve as URLs, o Gemini apenas classifica o que o Brave
-achou**. Assim link inventado deixa de ser uma questão de o modelo se comportar
-e passa a ser estruturalmente impossível — a URL só pode ter vindo da busca.
+descobre oportunidade fora das fontes fixas é o Serper. A divisão de trabalho é
+deliberada: **o Serper devolve as URLs, o Gemini apenas classifica o que o
+Serper achou**. Assim link inventado deixa de ser uma questão de o modelo se
+comportar e passa a ser estruturalmente impossível — a URL só pode ter vindo da
+busca.
 """
 
 import logging
@@ -14,7 +15,7 @@ import requests
 
 log = logging.getLogger(__name__)
 
-API = "https://api.search.brave.com/res/v1/web/search"
+API = "https://google.serper.dev/search"
 TIMEOUT = 25
 RESULTADOS_POR_CONSULTA = 10
 
@@ -60,14 +61,19 @@ CONSULTAS = (
 )
 
 
-def cliente_brave(api_key: str) -> Callable[[str], dict]:
+def cliente_serper(api_key: str) -> Callable[[str], dict]:
     """Cria o buscador real. Uma chamada por consulta."""
 
     def buscar(consulta: str) -> dict:
-        resposta = requests.get(
+        resposta = requests.post(
             API,
-            params={"q": consulta, "count": RESULTADOS_POR_CONSULTA, "country": "BR"},
-            headers={"X-Subscription-Token": api_key, "Accept": "application/json"},
+            json={
+                "q": consulta,
+                "num": RESULTADOS_POR_CONSULTA,
+                "gl": "br",
+                "hl": "pt-br",
+            },
+            headers={"X-API-KEY": api_key, "Content-Type": "application/json"},
             timeout=TIMEOUT,
         )
         resposta.raise_for_status()
@@ -81,8 +87,8 @@ def pesquisar(
 ) -> tuple[list[dict], list[str]]:
     """Roda as consultas e devolve os resultados achatados, mais os erros.
 
-    Consulta que falha não derruba as outras — o free tier do Brave limita uma
-    consulta por segundo, e um 429 pontual não pode custar a edição inteira.
+    Consulta que falha não derruba as outras: um 429 pontual não pode custar a
+    edição inteira.
     """
     encontrados: list[dict] = []
     erros: list[str] = []
@@ -96,8 +102,8 @@ def pesquisar(
             erros.append(f"{item['consulta']}: {erro}")
             continue
 
-        for r in (dados.get("web") or {}).get("results") or []:
-            url = (r.get("url") or "").strip()
+        for r in dados.get("organic") or []:
+            url = (r.get("link") or "").strip()
             if not url or url in vistos:
                 continue
             vistos.add(url)
@@ -105,7 +111,7 @@ def pesquisar(
                 {
                     "titulo": (r.get("title") or "").strip(),
                     "url": url,
-                    "descricao": (r.get("description") or "").strip(),
+                    "descricao": (r.get("snippet") or "").strip(),
                     "categoria": item["categoria"],
                     "afirmativa": bool(item.get("afirmativa")),
                 }

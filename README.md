@@ -11,7 +11,7 @@ Projeto voluntário do Clube dos Libertos — Black Network.
 Toda segunda, 07:00 (Brasília), o GitHub Actions roda o pipeline:
 
 1. `collector` varre as fontes fixas de `newsletter/sources.yml`
-2. `search` consulta o Brave Search e `discovery` manda o Gemini classificar o
+2. `search` consulta o Serper (Google) e `discovery` manda o Gemini classificar o
    que voltou — separando oportunidade real de artigo sobre o assunto
 3. `curator` deduplica contra o histórico, descarta link morto e prazo vencido,
    ordena por relevância (afirmativas primeiro) e corta na cota de cada categoria
@@ -44,12 +44,12 @@ avaliação — inclusive o que foi reprovado e por quê — está em
 
 Categoria sem fonte fixa continua coberta pela busca na web.
 
-**Por que a busca é do Brave e não do Gemini:** a intenção original era usar o
+**Por que a busca é do Serper e não do Gemini:** a intenção original era usar o
 grounding de Google Search embutido no Gemini, uma chave só para tudo. No free
 tier essa ferramenta responde `429 RESOURCE_EXHAUSTED` — o modelo tem cota, a
-ferramenta de busca não. O Brave cobre a busca no plano gratuito, e a divisão
-acabou saindo melhor: **o Brave devolve as URLs e o Gemini só classifica o que
-o Brave achou**, então link inventado é estruturalmente impossível, e não uma
+ferramenta de busca não. O Serper cobre a busca no plano gratuito, e a divisão
+acabou saindo melhor: **o Serper devolve as URLs e o Gemini só classifica o que
+o Serper achou**, então link inventado é estruturalmente impossível, e não uma
 questão de o modelo obedecer ao prompt.
 
 ## Rodar localmente
@@ -74,8 +74,8 @@ segredo entra em arquivo versionado, e nenhum deve ser colado em chat.**
 
 | Segredo | Onde obter |
 |---|---|
-| `GEMINI_API_KEY` | aistudio.google.com. Só redação e classificação: o grounding de Google Search **não tem cota no free tier** (429), por isso a busca é do Brave |
-| `BRAVE_API_KEY` | api-dashboard.search.brave.com — plano gratuito, 2 mil consultas/mês. O pipeline usa 7 por execução |
+| `GEMINI_API_KEY` | aistudio.google.com. Só redação e classificação: o grounding de Google Search **não tem cota no free tier** (429), por isso a busca é do Serper |
+| `SERPER_KEY` | serper.dev — plano gratuito. O pipeline usa 7 consultas por execução |
 | `BREVO_API_KEY` | Brevo → SMTP & API → API keys |
 | `BREVO_LIST_ID` | Brevo → Contacts → Lists; o id aparece na URL da lista (hoje: `3`, lista "Membros") |
 

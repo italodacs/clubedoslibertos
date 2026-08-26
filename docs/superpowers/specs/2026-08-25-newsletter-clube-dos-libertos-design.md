@@ -43,7 +43,7 @@ com inscrições abertas**, formatada na identidade visual do Clube, entregue co
 |---|---|---|
 | Curadoria | Rascunho aprovado por humano | Protege contra link quebrado, vaga vencida e oportunidade inventada pela IA; é o que o documento institucional prevê |
 | Busca | Híbrido: fontes fixas + IA com acesso à web | Fontes fixas garantem piso de conteúdo toda semana; a IA cobre o que está fora da lista |
-| IA | ~~Gemini com grounding de Google Search~~ → **Brave Search para busca + Gemini para classificar e redigir** | A premissa original caiu na primeira execução: no free tier do Gemini o grounding responde `429 RESOURCE_EXHAUSTED` — o modelo tem cota, a ferramenta de busca não. Revisado em 26/08/2026 |
+| IA | ~~Gemini com grounding de Google Search~~ → **Serper (Google) para busca + Gemini para classificar e redigir** | A premissa original caiu na primeira execução: no free tier do Gemini o grounding responde `429 RESOURCE_EXHAUSTED` — o modelo tem cota, a ferramenta de busca não. Revisado em 26/08/2026 |
 | Envio | Brevo (free tier) | Lista, descadastro automático, métricas e entregabilidade sem custo |
 | Lista de contatos | Gerida direto no Brevo | Elimina módulo de sincronização, credencial do Google e risco de LGPD por sobrescrever descadastro |
 | Execução | GitHub Actions com cron | Gratuito, não depende da máquina do autor estar ligada, segredos em Secrets, log por execução |
@@ -122,16 +122,15 @@ Search do próprio Gemini. Não é viável no free tier: a ferramenta responde
 
 A divisão passou a ser:
 
-- **`search`** consulta a API do Brave Search (plano gratuito, 2 mil
-  consultas/mês; o pipeline usa 7 por execução — uma por frente de conteúdo,
-  incluindo uma consulta explicitamente afirmativa, porque nenhuma fonte fixa
-  cobre esse terreno).
+- **`search`** consulta a API do Serper (plano gratuito; o pipeline usa 7 por
+  execução — uma por frente de conteúdo, incluindo uma consulta explicitamente
+  afirmativa, porque nenhuma fonte fixa cobre esse terreno).
 - **`discovery`** manda o Gemini classificar os resultados: separa oportunidade
   real de artigo, extrai prazo, confirma categoria.
 
 **Regra dura, agora estrutural:** `interpretar` só aceita item cuja URL esteja
 entre os resultados da busca. Link inventado deixou de depender de o modelo
-obedecer ao prompt — a URL só pode ter vindo do Brave. Categoria e flag
+obedecer ao prompt — a URL só pode ter vindo do Serper. Categoria e flag
 afirmativa da consulta prevalecem sobre o palpite do modelo, já que a consulta
 sabia o que estava procurando.
 

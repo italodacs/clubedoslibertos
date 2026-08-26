@@ -16,7 +16,7 @@ from newsletter.models import Oportunidade
 
 log = logging.getLogger(__name__)
 
-TIMEOUT = 20
+TIMEOUT_PADRAO = 20
 USER_AGENT = (
     "ClubeDosLibertos-Newsletter/1.0 "
     "(+https://github.com/italodacs/clubedoslibertos)"
@@ -25,9 +25,9 @@ USER_AGENT = (
 _DATA_BR = re.compile(r"(\d{1,2})/(\d{1,2})/(\d{4})")
 
 
-def buscar_http(url: str) -> str:
+def buscar_http(url: str, timeout: int = TIMEOUT_PADRAO) -> str:
     """Busca o conteúdo de uma URL. Levanta exceção em qualquer erro."""
-    resposta = requests.get(url, timeout=TIMEOUT, headers={"User-Agent": USER_AGENT})
+    resposta = requests.get(url, timeout=timeout, headers={"User-Agent": USER_AGENT})
     resposta.raise_for_status()
     return resposta.text
 
@@ -126,15 +126,20 @@ def _do_html(conteudo: str, fonte: dict) -> list[Oportunidade]:
 
 
 def coletar(
-    fontes: list[dict], buscar: Callable[[str], str]
+    fontes: list[dict], buscar: Callable[[str, int], str]
 ) -> tuple[list[Oportunidade], list[str]]:
-    """Percorre as fontes fixas. Fonte que falha é registrada, não propagada."""
+    """Percorre as fontes fixas. Fonte que falha é registrada, não propagada.
+
+    Cada fonte pode declarar o próprio `timeout`: portal lento não é portal
+    fora do ar, e o padrão de 20s derrubava uma fonte que só é vagarosa a
+    partir da região do runner.
+    """
     encontrados: list[Oportunidade] = []
     falhas: list[str] = []
 
     for fonte in fontes:
         try:
-            conteudo = buscar(fonte["url"])
+            conteudo = buscar(fonte["url"], fonte.get("timeout", TIMEOUT_PADRAO))
             if fonte["tipo"] == "rss":
                 encontrados.extend(_do_rss(conteudo, fonte))
             else:

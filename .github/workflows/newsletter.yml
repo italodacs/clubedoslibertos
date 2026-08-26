@@ -37,7 +37,10 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
-          BREVO_LIST_ID: ${{ secrets.BREVO_LIST_ID }}
+          # Variable, nao secret: o id da lista nao e sigiloso, e como secret o
+          # GitHub mascarava todo digito "3" nos logs — inclusive dentro de
+          # nomes de modelo e numeros de porta, o que atrapalhava diagnostico.
+          BREVO_LIST_ID: ${{ vars.BREVO_LIST_ID }}
         run: python -m newsletter.main
 
       - name: Guardar o html quando o Brevo falha

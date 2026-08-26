@@ -1,7 +1,7 @@
 import datetime
 from pathlib import Path
 
-from newsletter.collector import coletar
+from newsletter.collector import TIMEOUT_PADRAO, coletar
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -32,7 +32,7 @@ def _pagina():
 
 
 def _buscador(mapa):
-    def buscar(url):
+    def buscar(url, timeout):
         if url not in mapa:
             raise RuntimeError(f"fonte fora do ar: {url}")
         return mapa[url]
@@ -146,6 +146,31 @@ def test_descarta_href_que_nao_e_http():
     fonte = {**FONTE_HTML, "seletor": ".card-ruim"}
     itens, _ = coletar([fonte], _buscador({fonte["url"]: _pagina()}))
     assert itens == []
+
+
+def test_fonte_pode_declarar_timeout_proprio():
+    """A Escola Virtual Gov deu timeout em 20s nas duas primeiras execucoes
+    reais: e lenta a partir da regiao do runner, nao esta fora do ar."""
+    recebidos = []
+
+    def buscar(url, timeout):
+        recebidos.append(timeout)
+        return _feed()
+
+    fonte = {**FONTE_RSS, "timeout": 60}
+    coletar([fonte], buscar)
+    assert recebidos == [60]
+
+
+def test_fonte_sem_timeout_usa_o_padrao():
+    recebidos = []
+
+    def buscar(url, timeout):
+        recebidos.append(timeout)
+        return _feed()
+
+    coletar([FONTE_RSS], buscar)
+    assert recebidos == [TIMEOUT_PADRAO]
 
 
 def test_item_sem_link_e_descartado():

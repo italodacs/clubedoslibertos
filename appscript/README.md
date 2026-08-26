@@ -16,7 +16,7 @@ O menu tem três itens, na ordem em que devem ser usados:
 |---|---|
 | **1. Pré-visualizar** | Monta a edição, mostra quantos itens por bloco, quantos destinatários e todos os avisos da validação. Não envia nada |
 | **2. Enviar teste** | Manda a edição para os destinatários da aba `teste`, com `[TESTE]` no assunto |
-| **3. Enviar para a lista** | Envia para todos os ativos da planilha, com confirmação antes |
+| **3. Enviar newsletter** | Envia para todos os ativos da aba `db`, com confirmação antes |
 
 ## Instalação
 

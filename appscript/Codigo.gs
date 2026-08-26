@@ -76,7 +76,7 @@ function onOpen() {
     .addItem('1. Pré-visualizar (não envia)', 'preVisualizar')
     .addItem('2. Enviar teste (aba teste)', 'enviarTeste')
     .addSeparator()
-    .addItem('3. Enviar para a lista', 'enviarParaLista')
+    .addItem('3. Enviar newsletter', 'enviarNewsletter')
     .addToUi();
 }
 
@@ -149,8 +149,13 @@ function enviarTeste() {
   alerta_('Teste enviado', msg);
 }
 
-/** Envia para todos os destinatários ativos da planilha. */
-function enviarParaLista() {
+/**
+ * Envia a newsletter para todos os destinatários ativos da planilha.
+ *
+ * É o botão que uma pessoa clica depois de revisar o Doc e conferir o teste.
+ * Pede confirmação antes, porque não tem volta.
+ */
+function enviarNewsletter() {
   const edicao = montarEdicao_();
   const pessoas = lerDestinatarios_();
 

@@ -126,7 +126,11 @@ def main() -> int:
     brevo_key = os.environ["BREVO_API_KEY"]
     lista_id = int(os.environ["BREVO_LIST_ID"])
 
-    chamar_modelo = discovery.cliente_gemini(gemini_key)
+    # Dois clientes de proposito: so o discovery precisa de busca, e no free
+    # tier o grounding nao tem cota. Um cliente unico fazia o writer herdar a
+    # ferramenta e morrer junto.
+    chamar_com_busca = discovery.cliente_gemini(gemini_key, com_busca=True)
+    chamar_texto = discovery.cliente_gemini(gemini_key, com_busca=False)
 
     def salvar_html(html: str) -> None:
         CAMINHO_SAIDA.parent.mkdir(parents=True, exist_ok=True)
@@ -139,9 +143,9 @@ def main() -> int:
         "coletar": lambda: collector.coletar(
             collector.carregar_fontes(), collector.buscar_http
         ),
-        "descobrir": lambda: discovery.descobrir(chamar_modelo),
+        "descobrir": lambda: discovery.descobrir(chamar_com_busca),
         "verificar_link": _verificar_link,
-        "escrever": lambda blocos: writer.escrever(blocos, chamar_modelo),
+        "escrever": lambda blocos: writer.escrever(blocos, chamar_texto),
         "publicar": lambda html, assunto: publisher.criar_rascunho(
             html, assunto, lista_id, brevo_key
         ),

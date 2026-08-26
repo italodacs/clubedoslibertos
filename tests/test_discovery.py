@@ -63,3 +63,17 @@ def test_descobrir_captura_falha_do_modelo():
 def test_prompt_pede_url_de_origem_e_json():
     assert "URL" in PROMPT
     assert "JSON" in PROMPT
+
+
+def test_writer_nao_leva_a_ferramenta_de_busca():
+    """No free tier o grounding nao tem cota. Levar a ferramenta numa chamada
+    que so redige fazia o writer morrer no mesmo 429 do discovery."""
+    from newsletter.discovery import ferramentas
+
+    assert ferramentas(com_busca=False) == []
+
+
+def test_discovery_leva_a_ferramenta_de_busca():
+    from newsletter.discovery import ferramentas
+
+    assert len(ferramentas(com_busca=True)) == 1

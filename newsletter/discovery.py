@@ -37,20 +37,34 @@ busca. Se você não tem a URL de origem, NÃO inclua o item.
 """
 
 
-def cliente_gemini(api_key: str) -> Callable[[str], str]:
-    """Cria o chamador real do Gemini, com Google Search ligado."""
+def ferramentas(com_busca: bool) -> list:
+    """Quais ferramentas a chamada leva.
+
+    Só o `discovery` precisa de busca. O `writer` apenas redige, e levar a
+    ferramenta à toa custou caro: no free tier o grounding de Google Search não
+    tem cota, então o writer morria no mesmo 429 do discovery e a edição saía
+    sem resumo — quando poderia ter saído com.
+    """
+    if not com_busca:
+        return []
+    from google.genai import types
+
+    return [types.Tool(google_search=types.GoogleSearch())]
+
+
+def cliente_gemini(api_key: str, com_busca: bool = True) -> Callable[[str], str]:
+    """Cria o chamador real do Gemini."""
     from google import genai
     from google.genai import types
 
     cliente = genai.Client(api_key=api_key)
+    tools = ferramentas(com_busca)
 
     def chamar(prompt: str) -> str:
         resposta = cliente.models.generate_content(
             model=MODELO,
             contents=prompt,
-            config=types.GenerateContentConfig(
-                tools=[types.Tool(google_search=types.GoogleSearch())]
-            ),
+            config=types.GenerateContentConfig(tools=tools),
         )
         return resposta.text
 

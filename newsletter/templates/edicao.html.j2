@@ -54,7 +54,7 @@
               <p style="margin:0 0 6px;color:{{ preto }};font-size:15px;line-height:1.6;">{{ item.resumo }}</p>
               {% endif %}
               <p style="margin:0;color:{{ marrom }};font-size:13px;">
-                {{ item.fonte }}{% if item.prazo %} &middot; inscrições até {{ item.prazo.strftime('%d/%m/%Y') }}{% endif %}
+                {{ item.fonte }} &middot; {% if item.prazo %}inscrições até {{ item.prazo.strftime('%d/%m/%Y') }}{% else %}prazo não informado &mdash; confira na página{% endif %}
               </p>
             </td>
           </tr>

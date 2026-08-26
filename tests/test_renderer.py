@@ -90,3 +90,18 @@ def test_nao_usa_folha_de_estilo_externa():
     html = _html()
     assert "<link" not in html
     assert "@import" not in html
+
+
+def test_item_sem_prazo_diz_que_o_prazo_nao_foi_informado():
+    """A spec pede o item marcado, nao a linha omitida: quem le precisa
+    distinguir 'sem prazo' de 'prazo que a fonte nao publicou'."""
+    blocos = {
+        "Trainees e estágios": [_op("Trainee Sem Data", "https://exemplo.org/x")],
+        "Editais e formações": [],
+    }
+    html = renderizar("Oi", blocos, "W36")
+    assert "prazo não informado" in html
+
+
+def test_item_com_prazo_nao_recebe_a_marca():
+    assert "prazo não informado" not in _html()

@@ -41,7 +41,7 @@ const CONFIG = {
   LINKEDIN_URL: 'https://www.linkedin.com/company/clube-dos-libertos-black-network/',
   FORM_BASE_TALENTOS_URL: 'https://forms.gle/TXvssihhk4QTnCJo6',
   LOGO_URL:
-    'https://raw.githubusercontent.com/italodacs/clubedoslibertos/main/newsletter/assets/logo.png',
+    'https://raw.githubusercontent.com/italodacs/clubedoslibertos/main/assets/logo.png',
 
   // Link de saída da lista. Um Google Form é melhor que mailto: chega
   // organizado e não depende de alguém ler a caixa de entrada.
@@ -73,7 +73,7 @@ function onOpen() {
   DocumentApp.getUi()
     .createMenu('Newsletter')
     .addItem('1. Pré-visualizar (não envia)', 'preVisualizar')
-    .addItem('2. Enviar teste para mim', 'enviarTeste')
+    .addItem('2. Enviar teste (aba teste)', 'enviarTeste')
     .addSeparator()
     .addItem('3. Enviar para a lista', 'enviarParaLista')
     .addToUi();

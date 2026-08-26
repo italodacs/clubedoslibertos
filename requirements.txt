@@ -1,7 +1,0 @@
-requests==2.33.1
-Jinja2==3.1.6
-google-genai==2.4.0
-feedparser==6.0.14
-beautifulsoup4==4.15.0
-PyYAML==6.0.3
-pytest==9.1.1

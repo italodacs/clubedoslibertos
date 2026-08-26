@@ -36,6 +36,7 @@ jobs:
       - name: Montar a edicao e criar o rascunho
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}
           BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
           # Variable, nao secret: o id da lista nao e sigiloso, e como secret o
           # GitHub mascarava todo digito "3" nos logs — inclusive dentro de

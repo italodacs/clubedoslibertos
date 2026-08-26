@@ -20,6 +20,7 @@ from newsletter import (
     notifier,
     publisher,
     renderer,
+    search,
     writer,
 )
 
@@ -52,6 +53,14 @@ def _verificar_link(url: str) -> bool:
         return resposta.status_code < 400
     except Exception:
         return False
+
+
+def _descobrir(buscar_web, chamar_texto) -> tuple[list, list[str]]:
+    """Busca no Brave e manda o Gemini classificar o que voltou."""
+    resultados, erros_busca = search.pesquisar(search.CONSULTAS, buscar_web)
+    log.info("busca na web devolveu %d resultados", len(resultados))
+    itens, erros_modelo = discovery.descobrir(resultados, chamar_texto)
+    return itens, [*erros_busca, *erros_modelo]
 
 
 def executar(dependencias: dict) -> dict:
@@ -123,14 +132,14 @@ def main() -> int:
     )
 
     gemini_key = os.environ["GEMINI_API_KEY"]
+    brave_key = os.environ["BRAVE_API_KEY"]
     brevo_key = os.environ["BREVO_API_KEY"]
     lista_id = int(os.environ["BREVO_LIST_ID"])
 
-    # Dois clientes de proposito: so o discovery precisa de busca, e no free
-    # tier o grounding nao tem cota. Um cliente unico fazia o writer herdar a
-    # ferramenta e morrer junto.
-    chamar_com_busca = discovery.cliente_gemini(gemini_key, com_busca=True)
+    # Nenhuma das duas chamadas leva ferramenta de busca: quem busca e o Brave.
+    # O Gemini classifica o que a busca achou e redige a edicao.
     chamar_texto = discovery.cliente_gemini(gemini_key, com_busca=False)
+    buscar_web = search.cliente_brave(brave_key)
 
     def salvar_html(html: str) -> None:
         CAMINHO_SAIDA.parent.mkdir(parents=True, exist_ok=True)
@@ -143,7 +152,7 @@ def main() -> int:
         "coletar": lambda: collector.coletar(
             collector.carregar_fontes(), collector.buscar_http
         ),
-        "descobrir": lambda: discovery.descobrir(chamar_com_busca),
+        "descobrir": lambda: _descobrir(buscar_web, chamar_texto),
         "verificar_link": _verificar_link,
         "escrever": lambda blocos: writer.escrever(blocos, chamar_texto),
         "publicar": lambda html, assunto: publisher.criar_rascunho(

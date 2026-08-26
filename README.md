@@ -11,7 +11,8 @@ Projeto voluntário do Clube dos Libertos — Black Network.
 Toda segunda, 07:00 (Brasília), o GitHub Actions roda o pipeline:
 
 1. `collector` varre as fontes fixas de `newsletter/sources.yml`
-2. `discovery` pergunta ao Gemini (com Google Search) o que há de novo
+2. `search` consulta o Brave Search e `discovery` manda o Gemini classificar o
+   que voltou — separando oportunidade real de artigo sobre o assunto
 3. `curator` deduplica contra o histórico, descarta link morto e prazo vencido,
    ordena por relevância (afirmativas primeiro) e corta na cota de cada categoria
 4. `writer` redige a abertura e os resumos
@@ -41,7 +42,15 @@ Seis fontes fixas, todas verificadas contra o próprio collector. O histórico d
 avaliação — inclusive o que foi reprovado e por quê — está em
 [`docs/fontes-avaliadas.md`](docs/fontes-avaliadas.md).
 
-Categoria sem fonte fixa continua coberta pelo `discovery`.
+Categoria sem fonte fixa continua coberta pela busca na web.
+
+**Por que a busca é do Brave e não do Gemini:** a intenção original era usar o
+grounding de Google Search embutido no Gemini, uma chave só para tudo. No free
+tier essa ferramenta responde `429 RESOURCE_EXHAUSTED` — o modelo tem cota, a
+ferramenta de busca não. O Brave cobre a busca no plano gratuito, e a divisão
+acabou saindo melhor: **o Brave devolve as URLs e o Gemini só classifica o que
+o Brave achou**, então link inventado é estruturalmente impossível, e não uma
+questão de o modelo obedecer ao prompt.
 
 ## Rodar localmente
 
@@ -65,7 +74,8 @@ segredo entra em arquivo versionado, e nenhum deve ser colado em chat.**
 
 | Segredo | Onde obter |
 |---|---|
-| `GEMINI_API_KEY` | aistudio.google.com — **em projeto sem billing ativo**, senão a cota do free tier vira zero |
+| `GEMINI_API_KEY` | aistudio.google.com. Só redação e classificação: o grounding de Google Search **não tem cota no free tier** (429), por isso a busca é do Brave |
+| `BRAVE_API_KEY` | api-dashboard.search.brave.com — plano gratuito, 2 mil consultas/mês. O pipeline usa 7 por execução |
 | `BREVO_API_KEY` | Brevo → SMTP & API → API keys |
 | `BREVO_LIST_ID` | Brevo → Contacts → Lists; o id aparece na URL da lista (hoje: `3`, lista "Membros") |
 

@@ -20,7 +20,7 @@ informativo e URL absoluta que aponte para a página real da oportunidade.
 
 ## Aprovadas
 
-Cinco fontes.
+Seis fontes.
 
 | Fonte | Categoria | Seletor | Itens | Observação |
 |---|---|---|---|---|
@@ -28,6 +28,7 @@ Cinco fontes.
 | Cia de Estagios | `estagio` | `.vagas__card:not(.--expired)` | 11 | Saída mais limpa de todas. O seletor exclui as vagas que a própria página marca como encerradas |
 | Estagio Trainee | `estagio` | `a[href*="/post/"]` | 16 | Site em Wix: as classes são hashes gerados que mudam a cada rebuild, então o href é a única âncora estável |
 | Sebrae Cursos Online | `educacao` | `.product-card__title` | 50 (43 únicos) | O catálogo marca "Gratuito" em cada curso e não há preço na página — confirmado |
+| EBAC Webinars | `educacao` | `a[href*="/webinars/"]` | 6 | A EBAC não tem catálogo de cursos gratuitos (`/cursos-gratuitos` e `/free` respondem 404). O que é gratuito nela são os webinars e workshops, que aparecem em carrossel na home. Selecionado pelo href para garantir que só venha esse tipo, mesmo se o carrossel passar a promover curso pago |
 | Estudar Fora | `edital` | `.dce-post-title` | 12 (9 únicos) | Bolsas e intercâmbio. Mistura artigo com oportunidade — ver "Qualidade" abaixo |
 
 ## Reprovadas
@@ -48,6 +49,7 @@ Cinco fontes.
 | Fundação Lemann | HTTP 502 na avaliação |
 | CNPq chamadas públicas | HTTP 404; o portal gov.br responde 401 a robô em outras rotas |
 | Nube (`/vagas`) | HTTP 404 |
+| Coursera | **Não cadastrada — ver "Coursera" abaixo.** O catálogo responde e os cards são parseáveis, mas não há listagem só de curso gratuito: `?query=free` é busca por palavra, não filtro de preço |
 | Escola Virtual Gov | **Removida em 26/08/2026 por decisão da Presidência** — era escolha minha, não da lista definida por ela. Também vinha instável em produção: timeout de leitura em 20s nas duas primeiras execuções e `504 Gateway Time-out` quando o limite subiu para 60s |
 | Vagas.com (trainee e estágio) | **Removida em 25/08/2026 por decisão da Presidência.** Parseava bem (40 itens cada), mas misturava anúncio comum na listagem de trainee: entraram três variações de "Agente Stone — Executivo de Contas Externo", que a deduplicação não colapsou porque a cidade muda o título. As fontes especializadas cobrem o mesmo terreno com qualidade melhor |
 | empregosafirmativos.com.br | Domínio não resolve |
@@ -87,8 +89,19 @@ reconhece uma oportunidade como afirmativa, ela recebe o selo "Vaga afirmativa"
 no email e prioridade no ranking. Ou seja, ela aparece se aparecer, mas nada no
 pipeline vai atrás dela de propósito.
 
-**`educacao` ficou com uma fonte só** (Sebrae), depois da saída da Escola
-Virtual Gov. Se o Sebrae cair, a categoria depende inteiramente da busca.
+**Coursera.** Pedida pela Presidência em 26/08/2026 e não cadastrada, por um
+motivo de correção: o Coursera não expõe listagem só de curso gratuito que
+sobreviva ao parse. O que parece filtro é busca textual — `?query=free` devolve
+curso **pago** cujo título contém a palavra ("ChatGPT: Master **Free** AI Tools
+to Supercharge Productivity", "Build a **free** website with WordPress"), e o
+parâmetro `price=Free` é descartado no redirecionamento. Filtrar por
+`productDifficultyLevel` trouxe os certificados profissionais do Google, que são
+pagos.
+
+Isso importa porque **item de fonte fixa não passa pelo classificador** — vai
+direto para a curadoria. Um curso pago do Coursera entraria na edição sob o
+título "Editais e formações" como se fosse gratuito. Curso gratuito do Coursera
+continua podendo chegar pela busca do Serper, que passa pelo classificador.
 
 ## Como avaliar uma nova candidata
 

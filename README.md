@@ -38,7 +38,7 @@ de estágio.
 
 ## Fontes
 
-Cinco fontes fixas, todas verificadas contra o próprio collector. O histórico de
+Seis fontes fixas, todas verificadas contra o próprio collector. O histórico de
 avaliação — inclusive o que foi reprovado e por quê — está em
 [`docs/fontes-avaliadas.md`](docs/fontes-avaliadas.md).
 

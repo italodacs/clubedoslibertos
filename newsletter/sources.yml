@@ -50,6 +50,19 @@
   afirmativa: false
 
 
+- nome: EBAC Webinars
+  url: https://ebaconline.com.br/
+  tipo: html
+  categoria: educacao
+  # Selecionado pelo href, nao por classe: a EBAC nao tem pagina de cursos
+  # gratuitos (os caminhos obvios respondem 404), e os webinars/workshops dela
+  # - que sao gratuitos - aparecem em carrossel na home. Casar o padrao
+  # /webinars/ garante que so venha esse tipo, mesmo que o carrossel passe a
+  # promover curso pago.
+  seletor: 'a[href*="/webinars/"]'
+  afirmativa: false
+
+
 # --- Bolsas e intercambio ---
 
 - nome: Estudar Fora

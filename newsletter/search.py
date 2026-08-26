@@ -19,9 +19,7 @@ API = "https://google.serper.dev/search"
 TIMEOUT = 25
 RESULTADOS_POR_CONSULTA = 10
 
-# Uma consulta por frente de conteúdo. A consulta afirmativa existe porque
-# nenhuma das fontes fixas cobre esse terreno: se a busca não procurar por ela
-# de propósito, oportunidade afirmativa simplesmente não aparece na edição.
+# Uma consulta por frente de conteúdo.
 CONSULTAS = (
     {
         "consulta": "programa de trainee 2027 inscrições abertas Brasil",
@@ -29,29 +27,14 @@ CONSULTAS = (
         "afirmativa": False,
     },
     {
-        "consulta": "programa de trainee afirmativo pessoas negras inscrições abertas",
-        "categoria": "trainee",
-        "afirmativa": True,
-    },
-    {
         "consulta": "programa de estágio 2027 inscrições abertas Brasil",
         "categoria": "estagio",
         "afirmativa": False,
     },
     {
-        "consulta": "programa de estágio afirmativo pessoas negras inscrições abertas",
-        "categoria": "estagio",
-        "afirmativa": True,
-    },
-    {
         "consulta": "edital bolsa de estudos intercâmbio inscrições abertas 2026",
         "categoria": "edital",
         "afirmativa": False,
-    },
-    {
-        "consulta": "bolsa de estudos para pessoas negras inscrições abertas",
-        "categoria": "edital",
-        "afirmativa": True,
     },
     {
         "consulta": "curso online gratuito com certificado inscrições abertas",

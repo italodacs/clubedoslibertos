@@ -23,10 +23,11 @@ def test_consultas_cobrem_as_quatro_categorias():
     assert categorias == {"trainee", "estagio", "edital", "educacao"}
 
 
-def test_existe_consulta_afirmativa():
-    """Oportunidade afirmativa nao tem fonte fixa nenhuma: se a busca nao
-    procurar por ela de proposito, ela simplesmente nao aparece."""
-    assert any(c.get("afirmativa") for c in CONSULTAS)
+def test_uma_consulta_por_categoria_sem_duplicar():
+    """Cada credito do Serper conta: nao vale gastar duas consultas na mesma
+    frente de conteudo."""
+    categorias = [c["categoria"] for c in CONSULTAS]
+    assert len(categorias) == len(set(categorias))
 
 
 def test_pesquisa_devolve_titulo_url_e_descricao():

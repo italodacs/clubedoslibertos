@@ -49,15 +49,6 @@
   seletor: ".product-card__title"
   afirmativa: false
 
-- nome: Escola Virtual Gov
-  url: https://www.escolavirtual.gov.br/catalogo
-  tipo: html
-  categoria: educacao
-  seletor: ".card-title"
-  # Deu timeout em 20s nas duas primeiras execucoes reais. Nao esta fora do ar:
-  # e lenta a partir da regiao do runner do Actions.
-  timeout: 60
-  afirmativa: false
 
 # --- Bolsas e intercambio ---
 

@@ -38,7 +38,7 @@ de estágio.
 
 ## Fontes
 
-Seis fontes fixas, todas verificadas contra o próprio collector. O histórico de
+Cinco fontes fixas, todas verificadas contra o próprio collector. O histórico de
 avaliação — inclusive o que foi reprovado e por quê — está em
 [`docs/fontes-avaliadas.md`](docs/fontes-avaliadas.md).
 
@@ -75,7 +75,7 @@ segredo entra em arquivo versionado, e nenhum deve ser colado em chat.**
 | Segredo | Onde obter |
 |---|---|
 | `GEMINI_API_KEY` | aistudio.google.com. Só redação e classificação: o grounding de Google Search **não tem cota no free tier** (429), por isso a busca é do Serper |
-| `SERPER_KEY` | serper.dev — plano gratuito. O pipeline usa 7 consultas por execução |
+| `SERPER_KEY` | serper.dev — plano gratuito por créditos. O pipeline usa 4 consultas por execução, uma por categoria |
 | `BREVO_API_KEY` | Brevo → SMTP & API → API keys |
 | `BREVO_LIST_ID` | Brevo → Contacts → Lists; o id aparece na URL da lista (hoje: `3`, lista "Membros") |
 

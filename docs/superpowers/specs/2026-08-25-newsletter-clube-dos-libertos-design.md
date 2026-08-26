@@ -122,9 +122,11 @@ Search do próprio Gemini. Não é viável no free tier: a ferramenta responde
 
 A divisão passou a ser:
 
-- **`search`** consulta a API do Serper (plano gratuito; o pipeline usa 7 por
-  execução — uma por frente de conteúdo, incluindo uma consulta explicitamente
-  afirmativa, porque nenhuma fonte fixa cobre esse terreno).
+- **`search`** consulta a API do Serper (plano gratuito; 4 consultas por
+  execução, uma por categoria). Em 26/08/2026 a Presidência decidiu não manter
+  consultas afirmativas dedicadas: a complexidade não se pagava. Oportunidade
+  afirmativa continua recebendo selo e prioridade no ranking **quando o
+  classificador a reconhece** — mas nada no pipeline vai atrás dela.
 - **`discovery`** manda o Gemini classificar os resultados: separa oportunidade
   real de artigo, extrai prazo, confirma categoria.
 

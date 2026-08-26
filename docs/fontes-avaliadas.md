@@ -20,7 +20,7 @@ informativo e URL absoluta que aponte para a página real da oportunidade.
 
 ## Aprovadas
 
-Seis fontes, nenhuma falha na verificação.
+Cinco fontes.
 
 | Fonte | Categoria | Seletor | Itens | Observação |
 |---|---|---|---|---|
@@ -28,7 +28,6 @@ Seis fontes, nenhuma falha na verificação.
 | Cia de Estagios | `estagio` | `.vagas__card:not(.--expired)` | 11 | Saída mais limpa de todas. O seletor exclui as vagas que a própria página marca como encerradas |
 | Estagio Trainee | `estagio` | `a[href*="/post/"]` | 16 | Site em Wix: as classes são hashes gerados que mudam a cada rebuild, então o href é a única âncora estável |
 | Sebrae Cursos Online | `educacao` | `.product-card__title` | 50 (43 únicos) | O catálogo marca "Gratuito" em cada curso e não há preço na página — confirmado |
-| Escola Virtual Gov | `educacao` | `.card-title` | 12 | Cursos gratuitos do governo federal; único domínio com TLS válido daqui |
 | Estudar Fora | `edital` | `.dce-post-title` | 12 (9 únicos) | Bolsas e intercâmbio. Mistura artigo com oportunidade — ver "Qualidade" abaixo |
 
 ## Reprovadas
@@ -49,6 +48,7 @@ Seis fontes, nenhuma falha na verificação.
 | Fundação Lemann | HTTP 502 na avaliação |
 | CNPq chamadas públicas | HTTP 404; o portal gov.br responde 401 a robô em outras rotas |
 | Nube (`/vagas`) | HTTP 404 |
+| Escola Virtual Gov | **Removida em 26/08/2026 por decisão da Presidência** — era escolha minha, não da lista definida por ela. Também vinha instável em produção: timeout de leitura em 20s nas duas primeiras execuções e `504 Gateway Time-out` quando o limite subiu para 60s |
 | Vagas.com (trainee e estágio) | **Removida em 25/08/2026 por decisão da Presidência.** Parseava bem (40 itens cada), mas misturava anúncio comum na listagem de trainee: entraram três variações de "Agente Stone — Executivo de Contas Externo", que a deduplicação não colapsou porque a cidade muda o título. As fontes especializadas cobrem o mesmo terreno com qualidade melhor |
 | empregosafirmativos.com.br | Domínio não resolve |
 | indiqueumapreta.com.br | Domínio não resolve |
@@ -79,11 +79,16 @@ um item no `curator`.
 
 ## Lacunas conhecidas
 
-**Nenhuma fonte afirmativa fixa.** Três domínios de empregabilidade para pessoas
-negras não resolveram DNS. Oportunidade afirmativa hoje chega pelo `discovery`,
-que marca a flag `afirmativa` e ganha prioridade no ranking. Vale procurar uma
-fonte estável: é o conteúdo de maior valor para a comunidade, e depender só da
-IA para achá-lo é o ponto mais frágil do pipeline.
+**Não há fonte afirmativa fixa, e a busca não procura por ela.** Três domínios
+de empregabilidade para pessoas negras não resolveram DNS, e em 26/08/2026 a
+Presidência decidiu não manter consultas afirmativas dedicadas na busca — a
+complexidade não se pagava. O que continua de pé: quando o classificador
+reconhece uma oportunidade como afirmativa, ela recebe o selo "Vaga afirmativa"
+no email e prioridade no ranking. Ou seja, ela aparece se aparecer, mas nada no
+pipeline vai atrás dela de propósito.
+
+**`educacao` ficou com uma fonte só** (Sebrae), depois da saída da Escola
+Virtual Gov. Se o Sebrae cair, a categoria depende inteiramente da busca.
 
 ## Como avaliar uma nova candidata
 

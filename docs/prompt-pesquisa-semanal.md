@@ -8,9 +8,9 @@ oportunidades e devolve o conteúdo pronto para colar em
 noite, para o envio de segunda) e cole o prompt abaixo. Depois pegue a saída e
 cole no arquivo `newsletter/edicao.md`, editando direto pelo github.com.
 
-**Por que YAML dentro de um `.md`:** o pipeline usa PyYAML, que já é dependência
-do projeto. Um bloco YAML não tem ambiguidade de parse — diferente de tabela ou
-lista markdown, onde um travessão fora de lugar muda o resultado em silêncio.
+**Por que JSON:** o Apps Script tem `JSON.parse` nativo e não tem parser de
+YAML. E JSON não tem a ambiguidade de tabela ou lista markdown, onde um
+travessão fora de lugar muda o resultado em silêncio.
 
 ---
 
@@ -49,33 +49,39 @@ REGRAS, e elas importam mais que preencher a cota:
 8. Se não achar a quantidade pedida numa categoria, devolva menos. Edição curta
    e verdadeira é melhor que edição cheia de item duvidoso.
 
-Responda SOMENTE com um bloco de código YAML, sem texto antes nem depois, neste
-formato exato:
+Responda SOMENTE com JSON, sem texto antes nem depois, sem cerca de código,
+neste formato exato:
 
-```yaml
-- titulo: "Alpargatas — Programa Trainee Expert 2027"
-  url: "https://exemplo.com/trainee"
-  categoria: trainee          # trainee | estagio | educacao | edital
-  prazo: 2026-09-21           # AAAA-MM-DD; deixe vazio só para curso sem prazo
-  local: "Nacional, remoto"
-  afirmativa: false           # true se for vaga afirmativa para pessoas negras
-  contexto: "O que a pessoa ganha e para quem serve, em uma ou duas frases."
-```
+{"itens": [
+  {
+    "titulo": "Alpargatas — Programa Trainee Expert 2027",
+    "url": "https://exemplo.com/trainee",
+    "categoria": "trainee",
+    "prazo": "2026-09-21",
+    "local": "Nacional, remoto",
+    "afirmativa": false,
+    "contexto": "O que a pessoa ganha e para quem serve, em uma ou duas frases."
+  }
+]}
+
+Onde `categoria` é trainee, estagio, educacao ou edital; `prazo` está em
+AAAA-MM-DD e pode ser null apenas para curso sem data; e `afirmativa` é true
+quando for vaga afirmativa para pessoas negras.
 ```
 
 ---
 
-## Formato esperado em `newsletter/edicao.md`
+## Formato esperado
 
-O arquivo contém apenas o bloco YAML devolvido pela rotina. O pipeline valida
-antes de montar a edição e falha alto se algo estiver fora:
+A saída vai colada num Google Doc, que o Apps Script lê e passa por
+`JSON.parse`. Campos:
 
 | Campo | Obrigatório | Regra |
 |---|---|---|
 | `titulo` | sim | precisa nomear a organização |
 | `url` | sim | absoluta, `https://` |
 | `categoria` | sim | `trainee`, `estagio`, `educacao` ou `edital` |
-| `prazo` | sim, exceto em `educacao` | `AAAA-MM-DD`, não pode estar no passado |
+| `prazo` | sim, exceto em `educacao` | `AAAA-MM-DD` ou `null`, não pode estar no passado |
 | `local` | não | usado no ranking e exibido no email |
 | `afirmativa` | não | `false` quando ausente |
 | `contexto` | não | insumo para o Gemini escrever o resumo |

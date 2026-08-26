@@ -8,9 +8,11 @@ oportunidades e devolve o conteúdo pronto para colar em
 noite, para o envio de segunda) e cole o prompt abaixo. Depois pegue a saída e
 cole no arquivo `newsletter/edicao.md`, editando direto pelo github.com.
 
-**Por que JSON:** o Apps Script tem `JSON.parse` nativo e não tem parser de
-YAML. E JSON não tem a ambiguidade de tabela ou lista markdown, onde um
-travessão fora de lugar muda o resultado em silêncio.
+**Por que markdown solto e não JSON:** o Apps Script não precisa entender o
+formato. Ele manda o texto do Doc para o Gemini, que já vai ser chamado para
+escrever o email de qualquer maneira — e o Gemini lê markdown sem esforço. Isso
+elimina o parser e, principalmente, deixa o conteúdo editável à mão no Doc antes
+do envio.
 
 ---
 
@@ -49,39 +51,39 @@ REGRAS, e elas importam mais que preencher a cota:
 8. Se não achar a quantidade pedida numa categoria, devolva menos. Edição curta
    e verdadeira é melhor que edição cheia de item duvidoso.
 
-Responda SOMENTE com JSON, sem texto antes nem depois, sem cerca de código,
-neste formato exato:
+Responda em markdown, agrupado por categoria, exatamente neste formato:
 
-{"itens": [
-  {
-    "titulo": "Alpargatas — Programa Trainee Expert 2027",
-    "url": "https://exemplo.com/trainee",
-    "categoria": "trainee",
-    "prazo": "2026-09-21",
-    "local": "Nacional, remoto",
-    "afirmativa": false,
-    "contexto": "O que a pessoa ganha e para quem serve, em uma ou duas frases."
-  }
-]}
+## Trainees
 
-Onde `categoria` é trainee, estagio, educacao ou edital; `prazo` está em
-AAAA-MM-DD e pode ser null apenas para curso sem data; e `afirmativa` é true
-quando for vaga afirmativa para pessoas negras.
+### Alpargatas — Programa Trainee Expert 2027
+- Prazo: 21/09/2026
+- Local: Nacional, remoto
+- Link: https://exemplo.com/trainee
+- Contexto: O que a pessoa ganha e para quem serve, em uma ou duas frases.
+
+## Estágios
+
+## Cursos e formações gratuitas
+
+## Editais, bolsas e intercâmbio
+
+Em curso sem data limite, escreva "Prazo: matrícula sempre aberta". Se a vaga
+for afirmativa para pessoas negras, acrescente uma linha "- Afirmativa: sim".
+Mantenha as seções na ordem acima, mesmo que alguma fique vazia.
 ```
 
 ---
 
-## Formato esperado
+## Formato no Google Doc
 
-A saída vai colada num Google Doc, que o Apps Script lê e passa por
-`JSON.parse`. Campos:
+Você cola a saída no Doc e o Apps Script manda o texto inteiro para o Gemini,
+que monta o email. Não há parser: o formato acima existe para **você** conseguir
+ler e corrigir, não para a máquina.
 
-| Campo | Obrigatório | Regra |
-|---|---|---|
-| `titulo` | sim | precisa nomear a organização |
-| `url` | sim | absoluta, `https://` |
-| `categoria` | sim | `trainee`, `estagio`, `educacao` ou `edital` |
-| `prazo` | sim, exceto em `educacao` | `AAAA-MM-DD` ou `null`, não pode estar no passado |
-| `local` | não | usado no ranking e exibido no email |
-| `afirmativa` | não | `false` quando ausente |
-| `contexto` | não | insumo para o Gemini escrever o resumo |
+Duas coisas que o Apps Script confere sozinho, sem IA:
+
+- **Toda URL do email tem que existir no Doc.** Se o Gemini devolver um link que
+  não estava lá, o envio para. É a mesma defesa estrutural do pipeline anterior:
+  link inventado deixa de depender de o modelo se comportar.
+- **Prazo no passado não sai.** Data vencida no Doc é erro de curadoria, e é
+  melhor o envio falhar do que a newsletter anunciar inscrição encerrada.

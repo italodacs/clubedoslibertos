@@ -28,11 +28,11 @@ O menu tem três itens, na ordem em que devem ser usados:
    (Documentos, Planilhas, Gmail e requisições externas)
 5. Recarregue o Doc — o menu **Newsletter** aparece
 
-Nenhum ID precisa ser preenchido: o Doc e a planilha já estão no `CONFIG`.
+Nenhum ID precisa ser preenchido: o Doc, a planilha e a aba já estão no `CONFIG`.
 
 ## A planilha
 
-Aba .
+Aba `db`.
 
 As colunas são descobertas pelo **cabeçalho da primeira linha**, em qualquer
 ordem. Qualquer coluna cujo título contenha:

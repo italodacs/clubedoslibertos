@@ -14,9 +14,15 @@ O menu tem três itens, na ordem em que devem ser usados:
 
 | Item | O que faz |
 |---|---|
-| **1. Pré-visualizar** | Monta a edição, mostra quantos itens por bloco, quantos destinatários e todos os avisos da validação. Não envia nada |
-| **2. Enviar teste** | Manda a edição para os destinatários da aba `teste`, com `[TESTE]` no assunto |
-| **3. Enviar newsletter** | Envia para todos os ativos da aba `db`, com confirmação antes |
+| **Pré-visualizar** | Monta a edição, mostra quantos itens por bloco, quantos destinatários e todos os avisos da validação. Não envia nada |
+| **Enviar teste para mim** | Pergunta um email e manda a prévia só para ele, com `[TESTE]` no assunto |
+| **Enviar newsletter** | Envia para todos os ativos da aba `db`, com confirmação antes |
+
+O teste envia **exatamente** o email que a lista vai receber. Isso não é
+automático: o Gemini redige diferente a cada chamada, então a edição gerada fica
+guardada em cache por 6 horas, com a chave sendo o hash do conteúdo do Doc.
+Mexer no Doc invalida o cache e gera texto novo — o que é o comportamento certo,
+mas significa que **editar o Doc depois do teste exige testar de novo**.
 
 ## Instalação
 
@@ -28,14 +34,14 @@ O menu tem três itens, na ordem em que devem ser usados:
    (Documentos, Planilhas, Gmail e requisições externas)
 5. Recarregue o Doc — o menu **Newsletter** aparece
 
-Nenhum ID precisa ser preenchido: o Doc, a planilha e as abas (`db` e `teste`)
-já estão no `CONFIG`.
+Nenhum ID precisa ser preenchido: o Doc, a planilha e a aba `db` já estão no
+`CONFIG`.
 
 ## A planilha
 
-Duas abas, mesmo formato: **`db`** com a lista real e **`teste`** com quem
-recebe o teste. O envio de teste lê a aba `teste`; o envio para a lista lê a
-`db`. Nenhum email de destinatário fica escrito no código.
+Uma aba: **`db`**, com a lista de quem recebe. Nenhum email de destinatário
+fica escrito no código, e o teste não usa a planilha — quem revisa digita o
+próprio endereço na hora.
 
 As colunas são descobertas pelo **cabeçalho da primeira linha**, em qualquer
 ordem. Qualquer coluna cujo título contenha:

@@ -27,9 +27,6 @@ const CONFIG = {
   PLANILHA_ID: '1znLhBKmn-PBChZZm8IOaDSI9Eojj5ayZGPQ3SJoEti8',
   ABA: 'db',
 
-  // Aba com os destinatários de teste. Mesmo formato da aba principal.
-  ABA_TESTE: 'teste',
-
   // As colunas são achadas pelo cabeçalho da primeira linha: qualquer coluna
   // cujo título contenha "email", "nome" ou "status" é reconhecida, em qualquer
   // ordem. Sem cabeçalho reconhecível, cai para A = nome e B = email.
@@ -73,10 +70,10 @@ const BLOCOS = [
 function onOpen() {
   DocumentApp.getUi()
     .createMenu('Newsletter')
-    .addItem('1. Pré-visualizar (não envia)', 'preVisualizar')
-    .addItem('2. Enviar teste (aba teste)', 'enviarTeste')
+    .addItem('Pré-visualizar (não envia)', 'preVisualizar')
+    .addItem('Enviar teste para mim', 'enviarTeste')
     .addSeparator()
-    .addItem('3. Enviar newsletter', 'enviarNewsletter')
+    .addItem('Enviar newsletter', 'enviarNewsletter')
     .addToUi();
 }
 
@@ -97,14 +94,7 @@ function preVisualizar() {
     if (n > 0) linhas.push('  ' + b.titulo + ': ' + n);
   });
   linhas.push('', 'Total: ' + edicao.total + ' itens');
-  linhas.push(
-    '',
-    'Destinatários na aba "' + CONFIG.ABA + '": ' + lerDestinatarios_().length,
-    'Destinatários na aba "' +
-      CONFIG.ABA_TESTE +
-      '": ' +
-      lerDestinatarios_(CONFIG.ABA_TESTE).length
-  );
+  linhas.push('', 'Destinatários ativos: ' + lerDestinatarios_().length);
   if (edicao.avisos.length) {
     linhas.push('', 'ATENÇÃO:');
     edicao.avisos.forEach(function (a) {
@@ -114,39 +104,37 @@ function preVisualizar() {
   alerta_('Pré-visualização', linhas.join('\n'));
 }
 
-/** Envia a edição para os destinatários da aba de teste, com [TESTE] no assunto. */
+/**
+ * Envia a edição para um email digitado na hora, com [TESTE] no assunto.
+ *
+ * Quem revisa põe o próprio endereço — não há lista de teste para manter, e
+ * qualquer pessoa da coordenação consegue conferir sem mexer na planilha.
+ */
 function enviarTeste() {
-  const edicao = montarEdicao_();
-  const pessoas = lerDestinatarios_(CONFIG.ABA_TESTE);
+  const ui = DocumentApp.getUi();
+  const resposta = ui.prompt(
+    'Enviar teste',
+    'Para qual email enviar a prévia?',
+    ui.ButtonSet.OK_CANCEL
+  );
+  if (resposta.getSelectedButton() !== ui.Button.OK) return;
 
-  if (!pessoas.length) {
-    throw new Error(
-      'Nenhum destinatário na aba "' +
-        CONFIG.ABA_TESTE +
-        '". Coloque pelo menos um email lá antes de testar.'
-    );
+  const email = resposta.getResponseText().trim();
+  if (!email || email.indexOf('@') === -1 || email.indexOf(' ') !== -1) {
+    throw new Error('Email inválido: ' + (email || '(vazio)'));
   }
 
-  const falhas = [];
-  pessoas.forEach(function (pessoa) {
-    try {
-      enviarUm_(pessoa, edicao, '[TESTE] ' + edicao.assunto);
-    } catch (erro) {
-      falhas.push(pessoa.email + ': ' + erro.message);
-    }
-  });
+  const edicao = montarEdicao_();
+  enviarUm_({ nome: '', email: email }, edicao, '[TESTE] ' + edicao.assunto);
 
-  let msg =
+  alerta_(
+    'Teste enviado',
     'Enviado para ' +
-    (pessoas.length - falhas.length) +
-    ' de ' +
-    pessoas.length +
-    ' na aba "' +
-    CONFIG.ABA_TESTE +
-    '".';
-  if (falhas.length) msg += '\n\nFalhas:\n' + falhas.join('\n');
-  msg += '\n\nAbra no celular antes de mandar para a lista.';
-  alerta_('Teste enviado', msg);
+      email +
+      '.\n\nAbra no celular antes de enviar para a lista.\n\n' +
+      'O "Enviar newsletter" vai mandar exatamente este email, desde que você ' +
+      'não altere o Doc no meio.'
+  );
 }
 
 /**
@@ -218,6 +206,16 @@ function montarEdicao_() {
     throw new Error('O Doc está vazio. Cole a edição antes de enviar.');
   }
 
+  // O Gemini redige diferente a cada chamada. Sem cache, o teste mostraria um
+  // texto e a lista receberia outro — o que esvazia o sentido de testar. A
+  // chave é o hash do Doc: mexer no conteúdo invalida e gera de novo.
+  const cache = CacheService.getDocumentCache();
+  const chave = 'edicao:' + hashDoTexto_(texto);
+  const guardado = cache ? cache.get(chave) : null;
+  if (guardado) {
+    return reviverEdicao_(JSON.parse(guardado));
+  }
+
   const bruto = pedirAoGemini_(texto);
   const validado = validar_(bruto, texto);
 
@@ -234,7 +232,7 @@ function montarEdicao_() {
     );
   }
 
-  return {
+  const edicao = {
     abertura: validado.abertura,
     itens: validado.itens,
     porBloco: porBloco,
@@ -242,6 +240,40 @@ function montarEdicao_() {
     avisos: validado.avisos,
     assunto: montarAssunto_(total),
   };
+
+  if (cache) {
+    try {
+      cache.put(chave, JSON.stringify(edicao), 21600); // 6 horas
+    } catch (erro) {
+      // Edição grande pode não caber no cache. Não é motivo para não enviar —
+      // só significa que o texto será gerado de novo na próxima ação.
+      console.warn('nao guardei a edicao no cache: ' + erro.message);
+    }
+  }
+
+  return edicao;
+}
+
+/** Identidade do conteúdo do Doc, para saber se ele mudou. */
+function hashDoTexto_(texto) {
+  const bytes = Utilities.computeDigest(
+    Utilities.DigestAlgorithm.MD5,
+    texto,
+    Utilities.Charset.UTF_8
+  );
+  return bytes
+    .map(function (b) {
+      return ((b & 0xff) + 0x100).toString(16).slice(1);
+    })
+    .join('');
+}
+
+/** O JSON do cache devolve prazo como texto; aqui ele volta a ser Date. */
+function reviverEdicao_(edicao) {
+  edicao.itens.forEach(function (item) {
+    item.prazo = item.prazo ? new Date(item.prazo) : null;
+  });
+  return edicao;
 }
 
 /** Texto puro do Doc da edição. */
